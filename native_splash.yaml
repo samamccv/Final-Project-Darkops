@@ -1,0 +1,7 @@
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#060811"
+  image: images/darkopslogo.png
+  
+  android_gravity: center
