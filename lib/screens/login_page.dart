@@ -35,7 +35,12 @@ class _LoginPageState extends State<LoginPage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(context),
-        backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+        backgroundColor: const Color.fromARGB(
+          255,
+          6,
+          8,
+          27,
+        ), // Updated background color
         body: Form(
           key: _formKey,
           child: ListView(
@@ -131,7 +136,12 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+      backgroundColor: const Color.fromARGB(
+        255,
+        6,
+        8,
+        27,
+      ), // Updated AppBar color
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
@@ -223,9 +233,9 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     }
                     Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Homepage()),
-                );
+                      context,
+                      MaterialPageRoute(builder: (context) => const Homepage()),
+                    );
                   },
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF6A5B8E),

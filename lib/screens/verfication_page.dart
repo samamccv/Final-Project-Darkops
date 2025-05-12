@@ -79,7 +79,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(),
-        backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+        backgroundColor: const Color.fromARGB(255, 6, 8, 27),
         body: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -193,7 +193,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
             backgroundColor:
                 isDisabled
                     ? const Color(0xFF6A5B8E).withOpacity(0.5)
-                    : const Color(0xFF6A5B8E),
+                    : const Color.fromARGB(255, 128, 123, 218),
             padding: const EdgeInsets.symmetric(
               vertical: 12.0,
               horizontal: 100.0,

@@ -30,6 +30,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <meta-data
+            android:name="NSPhotoLibraryUsageDescription"
+            android:value="We need access to your photo library to pick files." />
+        <meta-data
+            android:name="NSDocumentsFolderUsageDescription"
+            android:value="We need access to your documents to pick files." />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

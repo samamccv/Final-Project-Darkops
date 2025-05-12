@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:darkops/dashboard/qr_code_scanner.dart';
+import 'package:darkops/dashboard/sms_analyzer.dart';
+import 'package:darkops/dashboard/email_analyzer.dart';
+import 'package:darkops/dashboard/url_scanner.dart';
+import 'package:darkops/dashboard/apk_analyzer.dart';
 
 enum FeatureType { sms, email, url, qr, malware }
 
@@ -66,7 +70,16 @@ class _HomepageState extends State<Homepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Homepage')),
+      appBar: AppBar(
+        title: const Text('Homepage'),
+        backgroundColor: const Color.fromARGB(
+          255,
+          6,
+          8,
+          27,
+        ), // Updated background color
+      ),
+      backgroundColor: const Color.fromARGB(255, 6, 8, 27),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -81,7 +94,7 @@ class _HomepageState extends State<Homepage> {
       ),
       floatingActionButton: FloatingActionButton.small(
         onPressed: () => _showFeatureMenu(context),
-        backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+        backgroundColor: const Color.fromARGB(255, 6, 8, 27),
         child: const Icon(Icons.menu),
       ),
     );
@@ -89,22 +102,23 @@ class _HomepageState extends State<Homepage> {
 
   // Horizontal Scan Count Row
   // Horizontal Scan Count Row (Final Scrollable Version)
-Widget _buildScanCountRow() {
-  return SizedBox(
-    height: 100,
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: FeatureType.values.map((type) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: _buildScanBox(type),
-          );
-        }).toList(),
+  Widget _buildScanCountRow() {
+    return SizedBox(
+      height: 100,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children:
+              FeatureType.values.map((type) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: _buildScanBox(type),
+                );
+              }).toList(),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildScanBox(FeatureType type) {
     final icon = featureIcons[type]!;
@@ -124,11 +138,15 @@ Widget _buildScanCountRow() {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.deepPurple),
+          Icon(icon, color: Color.fromARGB(255, 128, 123, 218)),
           const SizedBox(height: 8),
           Text(
             '$count',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
           Text(
             title,
@@ -148,39 +166,50 @@ Widget _buildScanCountRow() {
     if (items == null || items.isEmpty) return const SizedBox();
 
     return Card(
-      color: const Color(0xFF1F1F1F),
+      color: const Color.fromARGB(255, 6, 8, 27),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: Colors.deepPurple),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...items.map(
-              (text) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  "• $text",
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: const Color.fromARGB(255, 128, 123, 218)),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...items.map(
+                (text) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    "• $text",
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -190,19 +219,21 @@ Widget _buildScanCountRow() {
   void _showFeatureMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1F1F1F),
+      backgroundColor: const Color.fromARGB(255, 6, 8, 27),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: FeatureType.values.map((type) {
-            return _buildFeatureTile(type);
-          }).toList(),
-        ),
-      ),
+      builder:
+          (context) => Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children:
+                  FeatureType.values.map((type) {
+                    return _buildFeatureTile(type);
+                  }).toList(),
+            ),
+          ),
     );
   }
 
@@ -218,6 +249,30 @@ Widget _buildScanCountRow() {
         Navigator.pop(context);
         if (type == FeatureType.qr) {
           _openQRScanner();
+        } else if (type == FeatureType.sms) {
+          // Navigate to the SMS Analyzer Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SMSAnalyzerPage()),
+          );
+        } else if (type == FeatureType.email) {
+          // Navigate to the Email Analyzer Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const EmailAnalyzerPage()),
+          );
+        } else if (type == FeatureType.url) {
+          // Navigate to the URL Scanner Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const URLScannerPage()),
+          );
+        } else if (type == FeatureType.malware) {
+          // Navigate to the APK Analyzer Page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const APKAnalyzerPage()),
+          );
         } else {
           setState(() {
             scanCounts[type] = (scanCounts[type] ?? 0) + 1;
@@ -246,9 +301,9 @@ Widget _buildScanCountRow() {
         ];
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Scanned QR: $result')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Scanned QR: $result')));
     }
   }
 }

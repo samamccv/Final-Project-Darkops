@@ -4,6 +4,10 @@
 	<dict>
 	    <key>NSCameraUsageDescription</key>
 		<string>This app requires camera access to scan QR codes.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>We need access to your photo library to pick files.</string>
+		<key>NSDocumentsFolderUsageDescription</key>
+		<string>We need access to your documents to pick files.</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

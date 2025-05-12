@@ -24,7 +24,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+      backgroundColor: const Color.fromARGB(255, 6, 8, 27), // Updated background color
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -79,7 +79,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+      backgroundColor: const Color.fromARGB( 255, 6, 8, 27,), // Updated AppBar color
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
