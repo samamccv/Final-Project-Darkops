@@ -50,7 +50,7 @@ class LoginContent extends StatelessWidget {
               onPressed: () {}, // TODO: implement Google sign-in
               icon: Icons.g_mobiledata,
               text: 'Continue with Google',
-              backgroundColor: const Color.fromARGB(255, 128, 123, 218),
+              backgroundColor: Color.fromARGB(255, 139, 92, 246),
               textColor: Colors.white,
               iconColor: Colors.white,
               padding: const EdgeInsets.symmetric(

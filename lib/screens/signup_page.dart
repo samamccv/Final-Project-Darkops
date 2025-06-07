@@ -147,7 +147,7 @@ class _SignupPageState extends State<SignupPage> {
       ),
       backgroundColor: const Color.fromARGB(255, 6, 8, 27),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new , color: Colors.white, size: 20),
         onPressed: () {
           Navigator.push(
             context,
@@ -307,7 +307,7 @@ class _SignupPageState extends State<SignupPage> {
                       }
                     },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6A5B8E),
+              backgroundColor: Color.fromARGB(255, 139, 92, 246),
               padding: const EdgeInsets.symmetric(
                 vertical: 12.0,
                 horizontal: 100.0,

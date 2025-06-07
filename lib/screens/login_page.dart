@@ -143,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
         27,
       ), // Updated AppBar color
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
       centerTitle: true,
@@ -234,11 +234,11 @@ class _LoginPageState extends State<LoginPage> {
                     }
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const Homepage()),
+                      MaterialPageRoute(builder: (context) =>  Homepage()),
                     );
                   },
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6A5B8E),
+            backgroundColor: Color.fromARGB(255, 139, 92, 246),
             padding: const EdgeInsets.symmetric(vertical: 12.0),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8.0),

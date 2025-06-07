@@ -116,7 +116,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
       ),
       backgroundColor: const Color.fromARGB(255, 16, 17, 26),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
       centerTitle: true,
@@ -186,14 +186,14 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
                 );
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Homepage()),
+                  MaterialPageRoute(builder: (context) =>  Homepage()),
                 );
                   },
           style: ElevatedButton.styleFrom(
             backgroundColor:
                 isDisabled
                     ? const Color(0xFF6A5B8E).withOpacity(0.5)
-                    : const Color.fromARGB(255, 128, 123, 218),
+                    : Color.fromARGB(255, 139, 92, 246),
             padding: const EdgeInsets.symmetric(
               vertical: 12.0,
               horizontal: 100.0,
