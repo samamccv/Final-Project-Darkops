@@ -35,12 +35,7 @@ class _LoginPageState extends State<LoginPage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(context),
-        backgroundColor: const Color.fromARGB(
-          255,
-          6,
-          8,
-          27,
-        ), // Updated background color
+        backgroundColor:Color(0xFF101828), // Updated background color
         body: Form(
           key: _formKey,
           child: ListView(
@@ -136,12 +131,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(
-        255,
-        6,
-        8,
-        27,
-      ), // Updated AppBar color
+      backgroundColor:Color(0xFF101828), // Updated AppBar color
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),

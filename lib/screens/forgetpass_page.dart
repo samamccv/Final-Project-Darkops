@@ -17,12 +17,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      backgroundColor: const Color.fromARGB(
-        255,
-        6,
-        8,
-        27,
-      ), // Updated background color
+      backgroundColor: Color(0xFF101828), // Updated background color
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -59,12 +54,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
           ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(
-        255,
-        6,
-        8,
-        27,
-      ), // Updated AppBar color
+      backgroundColor: Color(0xFF101828), // Updated AppBar color
       leading: IconButton(
         icon: const Icon(
           Icons.arrow_back_ios_new,

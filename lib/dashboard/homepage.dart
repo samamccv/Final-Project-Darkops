@@ -471,10 +471,9 @@ class _HomepageState extends State<Homepage> {
               ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) =>  ScanHistoryScreen()),
-                );
+                
+                
+                
               },
             ).animate(delay: (FeatureType.values.length * 100).ms)
              .fade(duration: 300.ms)

@@ -93,7 +93,7 @@ class _SignupPageState extends State<SignupPage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(context),
-        backgroundColor: const Color.fromARGB(255, 6, 8, 27),
+        backgroundColor: Color(0xFF101828),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -145,7 +145,7 @@ class _SignupPageState extends State<SignupPage> {
           ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(255, 6, 8, 27),
+      backgroundColor: Color(0xFF101828),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new , color: Colors.white, size: 20),
         onPressed: () {

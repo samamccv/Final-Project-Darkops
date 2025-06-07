@@ -42,7 +42,7 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
   @override
   Widget build(BuildContext context) {
     const Color primaryBackgroundColor = Color(0xFF101828);
-    const Color cardBackgroundColor = Color(0xFF10182A);
+    const Color cardBackgroundColor = Color(0xFF1D2939);
     const Color primaryBlue = Color.fromARGB(255, 139, 92, 246);
     const Color primaryTextColor = Colors.white;
     const Color secondaryTextColor = Color(0xFF98A2B3);
@@ -134,52 +134,53 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
   }
 
   Widget _buildInputSection(Color primaryBlue) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _controller,
-          maxLines: 6,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: 'Paste the SMS message to analyze...',
-            hintStyle: const TextStyle(color: Colors.white38),
-            filled: true,
-            fillColor: const Color(0xFF0D1117),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.deepPurple),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.deepPurpleAccent),
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Card(
+        color: const Color(0xFF0D1117),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: TextField(
+            controller: _controller,
+            maxLines: 6,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Paste the SMS message to analyze...',
+              hintStyle: TextStyle(color: Colors.white38),
+              border: InputBorder.none,
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _analyzeSMS,
-            icon: const Icon(Icons.sms_outlined),
-            label: const Text(
-              'Analyze SMS',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _analyzeSMS,
+          icon: const Icon(Icons.sms_outlined),
+          label: const Text(
+            'Analyze SMS',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              elevation: 0,
-            ),
+            elevation: 0,
           ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildResultSection(Color primaryBlue, Color primaryTextColor, Color secondaryTextColor) {
     return Column(

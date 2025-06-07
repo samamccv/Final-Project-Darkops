@@ -79,7 +79,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(),
-        backgroundColor: const Color.fromARGB(255, 6, 8, 27),
+        backgroundColor: Color(0xFF101828),
         body: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -114,7 +114,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
           ),
         ),
       ),
-      backgroundColor: const Color.fromARGB(255, 16, 17, 26),
+      backgroundColor: Color(0xFF101828),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
         onPressed: () => Navigator.pop(context),
