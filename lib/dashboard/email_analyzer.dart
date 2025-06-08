@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'package:darkops/dashboard/qr_code_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:darkops/dashboard/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 // --- MAIN WIDGET ---
 class EmailAnalysisPage extends StatefulWidget {
@@ -85,10 +88,10 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
   @override
   Widget build(BuildContext context) {
     // --- UPDATED COLOR PALETTE ---
-    const Color primaryBackgroundColor = Color(0xFF101828);
-    const Color cardBackgroundColor = Color(0xFF10182A);
+    final Color primaryBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final Color cardBackgroundColor = Theme.of(context).cardColor;
     const Color primaryBlue = Color(0xFF3B82F6);
-    const Color primaryTextColor = Colors.white;
+    final Color primaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
     const Color secondaryTextColor = Color(0xFF98A2B3);
 
     return Scaffold(
@@ -97,7 +100,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
         backgroundColor: primaryBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: primaryTextColor),
+          icon: Icon(Icons.arrow_back_ios_new, color: primaryTextColor),
           tooltip: 'Back to Dashboard',
           onPressed: () {
             if (Navigator.canPop(context)) {
@@ -115,7 +118,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
           child: Container(
-            padding: const EdgeInsets.all(16.0), // Reduced from 32.0 to 16.0
+            padding: const EdgeInsets.all(10.0), // Reduced from 32.0 to 16.0
             decoration: BoxDecoration(
               color: cardBackgroundColor,
               borderRadius: BorderRadius.circular(16.0),
@@ -164,14 +167,9 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
   Widget _buildHeader(Color textColor) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF121E3E),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Icon(Icons.email_outlined, color: Color(0xFF3B82F6), size: 24),
-        ),
+        
+        Icon(Icons.email_outlined, color: Color(0xFF3B82F6), size: 24),
+
         const SizedBox(width: 16),
         Text(
           'Email Analysis',
@@ -194,7 +192,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
       padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2939),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(

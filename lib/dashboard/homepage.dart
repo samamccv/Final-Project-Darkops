@@ -6,7 +6,8 @@ import 'package:darkops/dashboard/email_analyzer.dart';
 import 'package:darkops/dashboard/url_scanner.dart';
 import 'package:darkops/dashboard/apk_analyzer.dart';
 import 'package:darkops/screens/login_options.dart';
-import 'package:darkops/dashboard/ScanHistory_screen.dart';
+import 'package:darkops/dashboard/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 enum FeatureType { sms, email, url, qr, apk }
 
@@ -51,11 +52,11 @@ class _HomepageState extends State<Homepage> {
   };
 
   final Map<FeatureType, Color> iconColors = {
-    FeatureType.sms: const Color.fromARGB(255, 139, 92, 246), // blue-ish
-    FeatureType.email: Color.fromARGB(255, 59, 130, 246), // orange-ish
-    FeatureType.url: Color.fromARGB(255, 245, 158, 11),
-    FeatureType.qr: Color.fromARGB(255, 99, 102, 241),
-    FeatureType.apk: Color.fromARGB(255, 15, 185, 129),
+    FeatureType.sms: const Color.fromARGB(255, 139, 92, 246),
+    FeatureType.email: const Color.fromARGB(255, 59, 130, 246),
+    FeatureType.url: const Color.fromARGB(255, 245, 158, 11),
+    FeatureType.qr: const Color.fromARGB(255, 99, 102, 241),
+    FeatureType.apk: const Color.fromARGB(255, 15, 185, 129),
   };
 
   final List<String> recentSMS = [
@@ -83,17 +84,18 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color background = Color(0xFF101828);
-    const Color cardColor = Color(0xFF1D2939);
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardColor = Theme.of(context).cardColor;
+    final textColor =
+        Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
     const Color primaryBlue = Color(0xFF3B82F6);
-    const Color white = Colors.white;
-    const Color greyText = Colors.grey;
+    final Color greyText = Colors.grey;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: _buildAppBarTitle(white, primaryBlue),
-        backgroundColor: background,
+        title: _buildAppBarTitle(textColor, primaryBlue),
+        backgroundColor: backgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
@@ -103,19 +105,17 @@ class _HomepageState extends State<Homepage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Hello, Sama 👋',
                 style: TextStyle(
-                  color: white,
+                  color: textColor,
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 16),
-              _buildHorizontalFeatureList(cardColor, white),
+              _buildHorizontalFeatureList(cardColor, textColor),
               const SizedBox(height: 20),
-
-              // Single Recent Activity Headline in grey color
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
@@ -127,23 +127,19 @@ class _HomepageState extends State<Homepage> {
                   ),
                 ),
               ),
-
-              // Recent SMS Card (without "Recent Activity" in title)
               _buildRecentCard(
                 FeatureType.sms,
                 recentSMS,
                 cardColor,
-                white,
+                textColor,
                 removeRecentActivityFromTitle: true,
               ),
               const SizedBox(height: 16),
-
-              // Recent Email Card (without "Recent Activity" in title)
               _buildRecentCard(
                 FeatureType.email,
                 recentEmails,
                 cardColor,
-                white,
+                textColor,
                 removeRecentActivityFromTitle: true,
               ),
             ],
@@ -151,7 +147,7 @@ class _HomepageState extends State<Homepage> {
         ),
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 10), // moved slightly downward
+        padding: const EdgeInsets.only(bottom: 10),
         child: FloatingActionButton(
           onPressed: () => _showFeatureMenu(context),
           backgroundColor: const Color.fromARGB(255, 20, 41, 74),
@@ -159,13 +155,13 @@ class _HomepageState extends State<Homepage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
           ),
-          child: const Icon(Icons.dashboard_outlined, color: white, size: 28),
+          child: Icon(Icons.dashboard_outlined, color: Colors.white, size: 28),
         ),
       ),
     );
   }
 
-  Widget _buildHorizontalFeatureList(Color cardColor, Color white) {
+  Widget _buildHorizontalFeatureList(Color cardColor, Color textColor) {
     return SizedBox(
       height: 150,
       child: ListView(
@@ -207,7 +203,7 @@ class _HomepageState extends State<Homepage> {
                           child: Text(
                             featureTitles[type]!,
                             style: TextStyle(
-                              color: white,
+                              color: textColor,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -219,7 +215,7 @@ class _HomepageState extends State<Homepage> {
                     Text(
                       '${scanCounts[type] ?? 0}',
                       style: TextStyle(
-                        color: white,
+                        color: textColor,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
@@ -233,7 +229,7 @@ class _HomepageState extends State<Homepage> {
                               : Icons.arrow_downward,
                           color:
                               isPositive
-                                  ? Colors.greenAccent
+                                  ? const Color.fromARGB(255, 38, 214, 129)
                                   : Colors.redAccent,
                           size: 14,
                         ),
@@ -244,7 +240,7 @@ class _HomepageState extends State<Homepage> {
                             fontSize: 12,
                             color:
                                 isPositive
-                                    ? Colors.greenAccent
+                                    ? const Color.fromARGB(255, 37, 184, 113)
                                     : Colors.redAccent,
                           ),
                         ),
@@ -287,7 +283,7 @@ class _HomepageState extends State<Homepage> {
     FeatureType type,
     List<String> messages,
     Color cardColor,
-    Color white, {
+    Color textColor, {
     bool removeRecentActivityFromTitle = false,
   }) {
     final icon = featureIcons[type]!;
@@ -296,10 +292,7 @@ class _HomepageState extends State<Homepage> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-        horizontal: 12,
-      ), // reduced padding
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
@@ -324,14 +317,14 @@ class _HomepageState extends State<Homepage> {
                     ? title
                     : '$title - Recent Activity',
                 style: TextStyle(
-                  color: white,
+                  color: textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8), // smaller spacing
+          const SizedBox(height: 8),
           ...messages.map(
             (msg) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 3.0),
@@ -346,8 +339,8 @@ class _HomepageState extends State<Homepage> {
                   Expanded(
                     child: Text(
                       msg,
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: textColor.withOpacity(0.7),
                         fontSize: 13,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -365,125 +358,125 @@ class _HomepageState extends State<Homepage> {
   Widget _buildAppBarTitle(Color textColor, Color iconColor) {
     return Row(
       children: [
-        // Clickable person icon with popup menu
         PopupMenuButton<String>(
-  icon: Container(
-    padding: const EdgeInsets.all(8),
-    decoration: BoxDecoration(
-      color: iconColor.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(8.0),
-    ),
-    child: Icon(Icons.person_outlined, color: iconColor, size: 24),
-  ),
-  color: const Color(0xFF1D2939),
-  onSelected: (value) {
-    switch (value) {
-      case 'account':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account selected')),
-        );
-        break;
-      case 'light_mode':
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Light Mode toggled')),
-        );
-        break;
-      case 'logout':
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginOptions()),
-        );
-        break;
-    }
-  },
-  itemBuilder: (context) => [
-    const PopupMenuItem(
-      value: 'account',
-      child: Row(
-        children: [
-          Icon(Icons.account_circle_outlined, color: Colors.white70, size: 20),
-          SizedBox(width: 10),
-          Text('Account'),
-        ],
-      ),
-    ),
-    const PopupMenuItem(
-      value: 'light_mode',
-      child: Row(
-        children: [
-          Icon(Icons.wb_sunny_outlined, color: Colors.white70, size: 20),
-          SizedBox(width: 10),
-          Text('Light Mode'),
-        ],
-      ),
-    ),
-    const PopupMenuItem(
-      value: 'logout',
-      child: Row(
-        children: [
-          Icon(Icons.logout, color: Colors.white70, size: 20),
-          SizedBox(width: 10),
-          Text('Logout'),
-        ],
-      ),
-    ),
-  ],
-),
-        const SizedBox(width: 16),
-        const Text(
-          'Dashboard',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Icon(Icons.person_outlined, color: iconColor, size: 24),
           ),
+          color: const Color(0xFF1D2939),
+          onSelected: (value) {
+            switch (value) {
+              case 'account':
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Account selected')),
+                );
+                break;
+              case 'light_mode':
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Light Mode toggled')),
+                );
+                break;
+              case 'logout':
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginOptions()),
+                );
+                break;
+            }
+          },
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem(
+                  value: 'account',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.account_circle_outlined,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Account'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'light_mode',
+                  child: Consumer<ThemeProvider>(
+                    builder:
+                        (context, themeProvider, _) => Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  themeProvider.isDarkMode
+                                      ? Icons.dark_mode
+                                      : Icons.light_mode,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 10),
+                                const Text('Toggle Light Mode'),
+                              ],
+                            ),
+                            Switch(
+                              value: themeProvider.isDarkMode,
+                              onChanged: (value) {
+                                themeProvider.toggleTheme(value);
+                              },
+                              activeColor: Colors.white,
+                            ),
+                          ],
+                        ),
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.logout_outlined,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Logout'),
+                    ],
+                  ),
+                ),
+              ],
         ),
       ],
     );
   }
 
   void _showFeatureMenu(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: const Color(0xFF10182A),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ...FeatureType.values.toList().asMap().entries.map(
-              (entry) => _buildAnimatedFeatureTile(entry.key, entry.value),
-            ),
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              leading: const Icon(Icons.history, color: Colors.white),
-              title: const Text(
-                'Scan History',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...FeatureType.values.toList().asMap().entries.map(
+                (entry) => _buildAnimatedFeatureTile(entry.key, entry.value),
               ),
-              onTap: () {
-                Navigator.pop(context);
-                
-                
-                
-              },
-            ).animate(delay: (FeatureType.values.length * 100).ms)
-             .fade(duration: 300.ms)
-             .slideX(begin: 0.3, end: 0),
-          ],
-        ),
-      );
-    },
-  );
-}
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildAnimatedFeatureTile(int index, FeatureType type) {
     final iconColor = iconColors[type]!;
@@ -493,8 +486,8 @@ class _HomepageState extends State<Homepage> {
           leading: Icon(featureIcons[type]!, color: iconColor),
           title: Text(
             featureTitles[type]!,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onBackground,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -554,3 +547,5 @@ class _HomepageState extends State<Homepage> {
     }
   }
 }
+    // Implement your feature menu here
+  

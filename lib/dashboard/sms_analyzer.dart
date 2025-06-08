@@ -41,10 +41,10 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBackgroundColor = Color(0xFF101828);
-    const Color cardBackgroundColor = Color(0xFF1D2939);
+    final Color primaryBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final Color cardBackgroundColor = Theme.of(context).cardColor;
     const Color primaryBlue = Color.fromARGB(255, 139, 92, 246);
-    const Color primaryTextColor = Colors.white;
+    final Color primaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
     const Color secondaryTextColor = Color(0xFF98A2B3);
 
     return Scaffold(
@@ -53,7 +53,7 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
         backgroundColor: primaryBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: primaryTextColor),
+          icon:  Icon(Icons.arrow_back_ios_new, color: primaryTextColor),
           tooltip: 'Back',
           onPressed: () {
             if (Navigator.canPop(context)) {
@@ -79,12 +79,12 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
                       child: Text(
                         'Enter SMS message below:',
                         style: TextStyle(
-                          color: Colors.white70,
+                          color: primaryTextColor,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -115,7 +115,7 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF121E3E),
+            color: const Color.fromARGB(255, 139, 92, 246).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: const Icon(Icons.sms_outlined, color: Color.fromARGB(255, 139, 92, 246), size: 24),
@@ -138,7 +138,7 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Card(
-        color: const Color(0xFF0D1117),
+       color: Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -148,10 +148,10 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
           child: TextField(
             controller: _controller,
             maxLines: 6,
-            style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
+            style:  TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+            decoration:  InputDecoration(
               hintText: 'Paste the SMS message to analyze...',
-              hintStyle: TextStyle(color: Colors.white38),
+              hintStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
               border: InputBorder.none,
             ),
           ),

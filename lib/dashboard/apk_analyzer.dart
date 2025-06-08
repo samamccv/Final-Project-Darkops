@@ -1,3 +1,4 @@
+import 'package:darkops/dashboard/qr_code_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -88,13 +89,13 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryBackgroundColor = Color(0xFF101828);
-    const Color cardBackgroundColor = Color(0xFF10182A);
-    const Color secondaryCardColor = Color(0xFF1D2939);
-    const Color primaryBlue = Color(0xFF6366F1);
+    final Color primaryBackgroundColor =Theme.of(context).scaffoldBackgroundColor;
+    final Color cardBackgroundColor = Theme.of(context).cardColor;
+    final Color secondaryCardColor = Theme.of(context).cardColor;
+    const Color primaryBlue = Color.fromARGB(211, 98, 233, 114);
     const Color iconGreen = Color(0xFF0FB981);
-    const Color primaryTextColor = Colors.white;
-    const Color secondaryTextColor = Color(0xFF98A2B3);
+    final Color primaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
+    final Color secondaryTextColor =Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
 
     return Scaffold(
       backgroundColor: primaryBackgroundColor,
@@ -102,7 +103,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
         backgroundColor: primaryBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color:Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new, color:Color.fromARGB(255, 2, 4, 20)),
           tooltip: 'Back',
           onPressed: () {
             if (Navigator.canPop(context)) {
@@ -115,13 +116,13 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: secondaryCardColor,
+                color: iconGreen.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.android, color: iconGreen, size: 24),
             ),
             const SizedBox(width: 16),
-            const Text(
+             Text(
               'APK Analysis',
               style: TextStyle(
                 color: primaryTextColor,
@@ -139,7 +140,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 800),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: cardBackgroundColor,
                 borderRadius: BorderRadius.circular(16),
@@ -202,7 +203,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
       padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF1D2939),
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(

@@ -42,11 +42,11 @@ class _URLScannerPageState extends State<URLScannerPage> {
 
   @override
   Widget build(BuildContext context) {
-    const Color backgroundColor = Color(0xFF101828);
-    const Color cardColor = Color(0xFF1D2939);
+    final Color backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final Color cardColor = Theme.of(context).cardColor;
     const Color iconColor = Color.fromARGB(255, 245, 158, 11);
-    const Color primaryTextColor = Colors.white;
-    const Color secondaryTextColor = Colors.white70;
+    final Color primaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
+    final Color secondaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -64,7 +64,7 @@ class _URLScannerPageState extends State<URLScannerPage> {
               child: Icon(Icons.language_outlined, color: iconColor, size: 24),
             ),
             const SizedBox(width: 16),
-            const Text(
+             Text(
               'URL Scanner',
               style: TextStyle(
                 color: primaryTextColor,
@@ -95,7 +95,7 @@ class _URLScannerPageState extends State<URLScannerPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                   Text(
                     'Analyze URLs for phishing, redirection, or security threats',
                     style: TextStyle(color: secondaryTextColor),
                   ),
@@ -106,10 +106,10 @@ class _URLScannerPageState extends State<URLScannerPage> {
                     controller: _controller,
                     keyboardType: TextInputType.url,
                     enabled: !_scanDone, // optional: disable input after scan
-                    style: const TextStyle(color: primaryTextColor),
+                    style:  TextStyle(color: primaryTextColor),
                     decoration: InputDecoration(
                       hintText: 'Enter a URL (e.g., https://example.com)',
-                      hintStyle: const TextStyle(color: Colors.white38),
+                      hintStyle:  TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white.withOpacity(0.1)),
                       filled: true,
                       fillColor: backgroundColor,
                       border: OutlineInputBorder(
@@ -151,7 +151,7 @@ class _URLScannerPageState extends State<URLScannerPage> {
                       children: [
                         Icon(Icons.check_circle_outline, color: Colors.greenAccent[400], size: 28),
                         const SizedBox(width: 12),
-                        const Text(
+                         Text(
                           'Analysis Complete',
                           style: TextStyle(
                             color: primaryTextColor,

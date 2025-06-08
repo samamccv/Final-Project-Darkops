@@ -2,10 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
-const Color backgroundColor = Color(0xFF101828); // Homepage background
-const Color cardColor = Color(0xFF1D2939); // Homepage card color
-const Color iconColor = Color.fromARGB(255,99, 102, 241); // QR icon color used in homepage
-const Color white = Colors.white;
 
 class QRScannerPage extends StatefulWidget {
   const QRScannerPage({super.key});
@@ -40,13 +36,19 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final Color backgroundColor = Theme.of(context).scaffoldBackgroundColor; // Homepage background
+final Color cardColor =Theme.of(context).cardColor; //Homepage card color
+const Color iconColor = Color.fromARGB(255,99, 102, 241); // QR icon color used in homepage
+final Color textcolor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
+
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: white),
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
@@ -60,10 +62,10 @@ class _QRScannerPageState extends State<QRScannerPage> {
               child: const Icon(Icons.qr_code_2_outlined, color: iconColor, size: 24),
             ),
             const SizedBox(width: 16),
-            const Text(
+            Text(
               'QR Scanner',
               style: TextStyle(
-                color: white,
+                color: textcolor,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -96,13 +98,13 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 decoration: BoxDecoration(
                   color: cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24),
+                  border: null,
                 ),
                 child: Text(
                   scannedResult != null
                       ? 'Scanned: $scannedResult'
                       : 'Scan a QR code',
-                  style: const TextStyle(fontSize: 16, color: white),
+                  style:  TextStyle(fontSize: 16, color: textcolor),
                   textAlign: TextAlign.center,
                 ),
               ),
