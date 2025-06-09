@@ -13,23 +13,25 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
   String? _analyzedText;
 
   void _analyzeSMS() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an SMS message')),
-      );
-      return;
-    }
-
-    setState(() {
-      _analysisDone = true;
-      _analyzedText = text;
-    });
-
+  final text = _controller.text.trim();
+  if (text.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Analyzing: "$text"')),
+      const SnackBar(content: Text('Please enter an SMS message')),
     );
+    return;
   }
+
+  setState(() {
+    _analysisDone = true;
+    _analyzedText = text;
+  });
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Analyzing: "$text"')),
+  );
+
+  Navigator.pop(context, text); // Return result here
+}
 
   void _resetState() {
     setState(() {

@@ -89,7 +89,7 @@ class _HomepageState extends State<Homepage> {
     final textColor =
         Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
     const Color primaryBlue = Color(0xFF3B82F6);
-    final Color greyText = Colors.grey;
+    const Color greyText = Colors.grey;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -116,8 +116,8 @@ class _HomepageState extends State<Homepage> {
               const SizedBox(height: 16),
               _buildHorizontalFeatureList(cardColor, textColor),
               const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
                 child: Text(
                   'Recent Activity',
                   style: TextStyle(
@@ -132,7 +132,6 @@ class _HomepageState extends State<Homepage> {
                 recentSMS,
                 cardColor,
                 textColor,
-                removeRecentActivityFromTitle: true,
               ),
               const SizedBox(height: 16),
               _buildRecentCard(
@@ -140,7 +139,6 @@ class _HomepageState extends State<Homepage> {
                 recentEmails,
                 cardColor,
                 textColor,
-                removeRecentActivityFromTitle: true,
               ),
             ],
           ),
@@ -283,9 +281,8 @@ class _HomepageState extends State<Homepage> {
     FeatureType type,
     List<String> messages,
     Color cardColor,
-    Color textColor, {
-    bool removeRecentActivityFromTitle = false,
-  }) {
+    Color textColor,
+  ) {
     final icon = featureIcons[type]!;
     final title = featureTitles[type]!;
     final iconColor = iconColors[type]!;
@@ -313,9 +310,7 @@ class _HomepageState extends State<Homepage> {
               ),
               const SizedBox(width: 8),
               Text(
-                removeRecentActivityFromTitle
-                    ? title
-                    : '$title - Recent Activity',
+                title,
                 style: TextStyle(
                   color: textColor,
                   fontSize: 14,
@@ -367,17 +362,12 @@ class _HomepageState extends State<Homepage> {
             ),
             child: Icon(Icons.person_outlined, color: iconColor, size: 24),
           ),
-          color: const Color(0xFF1D2939),
+          color: Theme.of(context).scaffoldBackgroundColor,
           onSelected: (value) {
             switch (value) {
               case 'account':
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Account selected')),
-                );
-                break;
-              case 'light_mode':
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Light Mode toggled')),
                 );
                 break;
               case 'logout':
@@ -390,13 +380,13 @@ class _HomepageState extends State<Homepage> {
           },
           itemBuilder:
               (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'account',
                   child: Row(
                     children: [
                       Icon(
                         Icons.account_circle_outlined,
-                        color: Colors.white70,
+                        color: textColor,
                         size: 20,
                       ),
                       SizedBox(width: 10),
@@ -417,11 +407,11 @@ class _HomepageState extends State<Homepage> {
                                   themeProvider.isDarkMode
                                       ? Icons.dark_mode
                                       : Icons.light_mode,
-                                  color: Colors.white70,
+                                  color: textColor,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 10),
-                                const Text('Toggle Light Mode'),
+                                const Text('Dark Mode'),
                               ],
                             ),
                             Switch(
@@ -435,17 +425,13 @@ class _HomepageState extends State<Homepage> {
                         ),
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'logout',
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.logout_outlined,
-                        color: Colors.white70,
-                        size: 20,
-                      ),
-                      SizedBox(width: 10),
-                      Text('Logout'),
+                      Icon(Icons.logout_outlined, color: textColor, size: 20),
+                      const SizedBox(width: 10),
+                      const Text('Logout'),
                     ],
                   ),
                 ),
@@ -499,28 +485,16 @@ class _HomepageState extends State<Homepage> {
                 _openQRScanner();
                 break;
               case FeatureType.sms:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SMSAnalyzerPage()),
-                );
+                _openSMSAnalyzer();
                 break;
               case FeatureType.email:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const EmailAnalysisPage()),
-                );
+                _openEmailAnalyzer();
                 break;
               case FeatureType.url:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const URLScannerPage()),
-                );
+                _openURLAnalyzer();
                 break;
               case FeatureType.apk:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const APKAnalyzerPage()),
-                );
+                _openAPKAnalyzer();
                 break;
             }
           },
@@ -546,6 +520,57 @@ class _HomepageState extends State<Homepage> {
       ).showSnackBar(SnackBar(content: Text('Scanned QR: $result')));
     }
   }
+
+  void _openSMSAnalyzer() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SMSAnalyzerPage()),
+    );
+
+    if (result != null) {
+      setState(() {
+        scanCounts[FeatureType.sms] = (scanCounts[FeatureType.sms] ?? 0) + 1;
+      });
+    }
+  }
+
+  void _openURLAnalyzer() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const URLScannerPage()),
+    );
+
+    if (result != null) {
+      setState(() {
+        scanCounts[FeatureType.url] = (scanCounts[FeatureType.url] ?? 0) + 1;
+      });
+    }
+  }
+
+  void _openAPKAnalyzer() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const APKAnalyzerPage()),
+    );
+
+    if (result != null) {
+      setState(() {
+        scanCounts[FeatureType.apk] = (scanCounts[FeatureType.apk] ?? 0) + 1;
+      });
+    }
+  }
+
+  void _openEmailAnalyzer() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const EmailAnalysisPage()),
+    );
+
+    if (result != null) {
+      setState(() {
+        scanCounts[FeatureType.email] =
+            (scanCounts[FeatureType.email] ?? 0) + 1;
+      });
+    }
+  }
 }
-    // Implement your feature menu here
-  

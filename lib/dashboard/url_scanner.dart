@@ -30,6 +30,7 @@ class _URLScannerPageState extends State<URLScannerPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Scanning URL: "$url"')),
     );
+      Navigator.pop(context, url);
   }
 
   void _reset() {

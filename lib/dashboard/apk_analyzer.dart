@@ -1,4 +1,4 @@
-import 'package:darkops/dashboard/qr_code_scanner.dart';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -76,7 +76,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
         content: Text('Analyzing "$_selectedFileName"...'),
         behavior: SnackBarBehavior.floating,
       ),
-    );
+          );
 
     await Future.delayed(const Duration(seconds: 3));
 
@@ -85,13 +85,14 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
       _analysisResult =
           '✅ No malware detected.\n🔐 5 permissions found.\n📦 Package is safe.';
     });
+    Navigator.pop(context, _selectedFileName);
+
   }
 
   @override
   Widget build(BuildContext context) {
     final Color primaryBackgroundColor =Theme.of(context).scaffoldBackgroundColor;
     final Color cardBackgroundColor = Theme.of(context).cardColor;
-    final Color secondaryCardColor = Theme.of(context).cardColor;
     const Color primaryBlue = Color.fromARGB(211, 98, 233, 114);
     const Color iconGreen = Color(0xFF0FB981);
     final Color primaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;

@@ -1,10 +1,8 @@
 import 'dart:io';
-import 'package:darkops/dashboard/qr_code_scanner.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:darkops/dashboard/theme_provider.dart';
-import 'package:provider/provider.dart';
+
 
 // --- MAIN WIDGET ---
 class EmailAnalysisPage extends StatefulWidget {
@@ -82,6 +80,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+    Navigator.pop(context,_fileName );
   }
 
   // --- UI STRUCTURE ---
