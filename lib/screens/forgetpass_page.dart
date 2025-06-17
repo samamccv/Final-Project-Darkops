@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:darkops/screens/verfication_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../blocs/auth/auth_bloc.dart';
+import 'reset_password_page.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
   const ForgetPasswordPage({super.key});
@@ -15,26 +17,45 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      backgroundColor: Color(0xFF101828), // Updated background color
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              const SizedBox(height: 40),
-              _buildInstructions(),
-              const SizedBox(height: 20),
-              _buildInputField(
-                'Email Address',
-                'name@example.com',
-                _emailController,
-              ),
-              const SizedBox(height: 18),
-              _buildResetButton(),
-            ],
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state.status == AuthStatus.passwordResetRequired) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ResetPasswordPage(email: _emailController.text),
+            ),
+          );
+        } else if (state.status == AuthStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Failed to send reset email'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(context),
+        backgroundColor: Color(0xFF101828), // Updated background color
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                const SizedBox(height: 40),
+                _buildInstructions(),
+                const SizedBox(height: 20),
+                _buildInputField(
+                  'Email Address',
+                  'name@example.com',
+                  _emailController,
+                ),
+                const SizedBox(height: 18),
+                _buildResetButton(),
+              ],
+            ),
           ),
         ),
       ),
@@ -100,9 +121,12 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
           controller: controller,
           style: const TextStyle(color: Colors.white),
           validator: (value) {
-            if (value == null || value.isEmpty)
+            if (value == null || value.isEmpty) {
               return 'Please enter your email';
-            if (!value.contains('@')) return 'Enter a valid email';
+            }
+            if (!value.contains('@')) {
+              return 'Enter a valid email';
+            }
             return null;
           },
           decoration: _inputDecoration(hint),
@@ -114,35 +138,38 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
 
   // Reset Button
   Widget _buildResetButton() {
-    return Center(
-      child: ElevatedButton(
-        onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) =>
-                        VerificationCodePage(email: _emailController.text),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        return Center(
+          child: ElevatedButton(
+            onPressed: !state.isLoading
+                ? () {
+                    if (_formKey.currentState!.validate()) {
+                      context.read<AuthBloc>().add(
+                        AuthForgotPasswordRequested(email: _emailController.text),
+                      );
+                    }
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color.fromARGB(255, 139, 92, 246),
+              padding: const EdgeInsets.symmetric(
+                vertical: 12.0,
+                horizontal: 100.0,
               ),
-            );
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color.fromARGB(255, 139, 92, 246),
-          padding: const EdgeInsets.symmetric(
-            vertical: 12.0,
-            horizontal: 100.0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            child: state.isLoading
+                ? const CircularProgressIndicator()
+                : Text(
+                    'Send Reset Code',
+                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 16.0),
+                  ),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-        ),
-        child: Text(
-          'Reset Password',
-          style: GoogleFonts.poppins(color: Colors.white, fontSize: 16.0),
-        ),
-      ),
+        );
+      },
     );
   }
 

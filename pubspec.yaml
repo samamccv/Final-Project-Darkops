@@ -41,14 +41,24 @@ dependencies:
   dio: ^5.8.0+1
   equatable: ^2.0.7
   shared_preferences: ^2.5.3
-  qr_code_scanner: ^1.0.1
-  permission_handler: ^11.3.1
-  file_picker: ^8.0.0+1
-  dotted_border: ^2.1.0
+  permission_handler: ^12.0.0+1
+  file_picker: ^10.1.9
+  dotted_border: ^3.0.1
   flutter_animate: ^4.5.0
   flutter_staggered_animations: ^1.1.1
   percent_indicator: ^4.2.2 # Added percent_indicator package
   animate_do: ^4.2.0
+  google_sign_in: ^6.2.1
+  flutter_secure_storage: ^9.2.2
+  provider: ^6.1.2
+  image_picker: ^1.0.7
+  camera: ^0.10.5+9
+  path_provider: ^2.1.2
+  mime: ^1.0.4
+  # sms_advanced: ^1.1.0  # Temporarily disabled due to iOS build issues
+  url_launcher: ^6.2.5
+  mobile_scanner: ^5.2.3
+  image: ^4.1.7
 
 dev_dependencies:
   flutter_test:
@@ -59,7 +69,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^3.0.0
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

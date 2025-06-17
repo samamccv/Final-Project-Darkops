@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:darkops/screens/login_page.dart';
 import 'package:darkops/screens/signup_page.dart';
+import '../blocs/auth/auth_bloc.dart';
+import '../dashboard/homepage.dart';
 
 class LoginOptions extends StatelessWidget {
   const LoginOptions({super.key});
@@ -20,12 +23,28 @@ class LoginContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        // Good for small screens or keyboard popups
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state.status == AuthStatus.authenticated) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else if (state.status == AuthStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage ?? 'Authentication failed'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Center(
+        child: SingleChildScrollView(
+          // Good for small screens or keyboard popups
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             const SizedBox(height: 90),
             Image.asset(
               'images/darkopslogo.png',
@@ -45,18 +64,26 @@ class LoginContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 250),
-            _buildButton(
-              context,
-              onPressed: () {}, // TODO: implement Google sign-in
-              icon: Icons.g_mobiledata,
-              text: 'Continue with Google',
-              backgroundColor: Color.fromARGB(255, 139, 92, 246),
-              textColor: Colors.white,
-              iconColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 65,
-                vertical: 6,
-              ), // Custom padding
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                return _buildButton(
+                  context,
+                  onPressed: !state.isLoading
+                      ? () {
+                          context.read<AuthBloc>().add(AuthGoogleSignInRequested());
+                        }
+                      : null,
+                  icon: Icons.g_mobiledata,
+                  text: state.isLoading ? 'Signing in...' : 'Continue with Google',
+                  backgroundColor: Color.fromARGB(255, 139, 92, 246),
+                  textColor: Colors.white,
+                  iconColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 65,
+                    vertical: 6,
+                  ), // Custom padding
+                );
+              },
             ),
             const SizedBox(height: 2),
             _buildButton(
@@ -95,7 +122,8 @@ class LoginContent extends StatelessWidget {
                 vertical: 8,
               ), // Custom padding
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -103,7 +131,7 @@ class LoginContent extends StatelessWidget {
 
   Widget _buildButton(
     BuildContext context, {
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
     required String text,
     required Color backgroundColor,
     required Color textColor,

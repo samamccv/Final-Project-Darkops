@@ -2,7 +2,54 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../services/scan_service.dart';
+import '../models/scan/scan_models.dart';
+import 'email_analysis_results.dart';
 
+/// Email Feature Color Palette
+class EmailColorPalette {
+  static const Color primary = Color(0xFF3B82F6); // Blue (59, 130, 246)
+  static const Color primaryLight = Color(0xFF60A5FA); // Lighter blue
+  static const Color primaryDark = Color(0xFF2563EB); // Darker blue
+
+  // Light mode colors
+  static const Color lightBackground = Color(0xFFF8FAFF);
+  static const Color lightSurface = Color(0xFFFFFFFF);
+  static const Color lightSecondary = Color(0xFFF1F5F9);
+
+  // Dark mode colors
+  static const Color darkBackground = Color(0xFF0F172A);
+  static const Color darkSurface = Color(0xFF1E293B);
+  static const Color darkSecondary = Color(0xFF334155);
+
+  // Accent colors for different states
+  static const Color success = Color(0xFF10B981);
+  static const Color warning = Color(0xFFF59E0B);
+  static const Color danger = Color(0xFFEF4444);
+
+  static Color getPrimaryColor(bool isDarkMode) => primary;
+  static Color getBackgroundColor(bool isDarkMode) =>
+      isDarkMode ? darkBackground : lightBackground;
+  static Color getSurfaceColor(bool isDarkMode) =>
+      isDarkMode ? darkSurface : lightSurface;
+  static Color getSecondaryColor(bool isDarkMode) =>
+      isDarkMode ? darkSecondary : lightSecondary;
+
+  static Color getPrimaryWithOpacity(bool isDarkMode, double opacity) {
+    return primary.withValues(alpha: opacity);
+  }
+
+  static LinearGradient getPrimaryGradient(bool isDarkMode) {
+    return LinearGradient(
+      colors: [
+        primary.withValues(alpha: 0.15),
+        primary.withValues(alpha: 0.08),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+}
 
 // --- MAIN WIDGET ---
 class EmailAnalysisPage extends StatefulWidget {
@@ -14,13 +61,18 @@ class EmailAnalysisPage extends StatefulWidget {
 
 class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
   // --- STATE AND LOGIC ---
-  String? _fileContent;
   String? _fileName;
+  bool _isAnalyzing = false;
+  EmailAnalysisResponse? _analysisResult;
+  String? _errorMessage;
+  final ScanService _scanService = ScanService();
 
   void _resetState() {
     setState(() {
-      _fileContent = null;
       _fileName = null;
+      _isAnalyzing = false;
+      _analysisResult = null;
+      _errorMessage = null;
     });
   }
 
@@ -33,73 +85,161 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
 
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!);
-        final content = await file.readAsString();
 
         setState(() {
-          _fileContent = content;
           _fileName = result.files.single.name;
+          _isAnalyzing = true;
+          _errorMessage = null;
         });
 
-        _analyzeEmail(content);
+        await _analyzeEmail(file);
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No file selected.'),
+          SnackBar(
+            content: const Text('No file selected.'),
             behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
+      setState(() {
+        _isAnalyzing = false;
+        _errorMessage = 'Error picking file: $e';
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error picking file: $e'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
-  void _analyzeEmail(String content) {
-    if (content.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('The selected email file is empty.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      _resetState();
-      return;
-    }
+  Future<void> _analyzeEmail(File emailFile) async {
+    try {
+      final result = await _scanService.analyzeEmailWithSubmission(emailFile);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Analyzing "$_fileName"...'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-    Navigator.pop(context,_fileName );
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _analysisResult = result;
+        });
+
+        // Try to capture screenshot if analysis was successful
+        try {
+          // Use a simple message ID for screenshot capture
+          final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+          print('Attempting to capture screenshot with messageId: $messageId');
+
+          final screenshotUrl = await _scanService.captureEmailScreenshot(
+            messageId,
+            emailFile,
+          );
+
+          print('Screenshot capture result: $screenshotUrl');
+
+          if (screenshotUrl != null && screenshotUrl.isNotEmpty) {
+            print('Screenshot captured successfully: $screenshotUrl');
+            // Create updated results with screenshot URL
+            final updatedResults = EmailAnalysisResponse(
+              headers: result.headers,
+              senderIp: result.senderIp,
+              ipInfo: result.ipInfo,
+              attachments: result.attachments,
+              phishingDetection: result.phishingDetection,
+              analysisTimestamp: result.analysisTimestamp,
+              screenshotUrl: screenshotUrl,
+              scanEngines: result.scanEngines,
+            );
+
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => EmailAnalysisResults(
+                      results: updatedResults,
+                      fileName: _fileName!,
+                      onAnalyzeAgain: () {
+                        Navigator.pop(context);
+                        _resetState();
+                      },
+                    ),
+              ),
+            );
+          } else {
+            print('Screenshot capture returned null or empty URL');
+            // Use original results without screenshot
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => EmailAnalysisResults(
+                      results: result,
+                      fileName: _fileName!,
+                      onAnalyzeAgain: () {
+                        Navigator.pop(context);
+                        _resetState();
+                      },
+                    ),
+              ),
+            );
+          }
+        } catch (screenshotError) {
+          // If screenshot capture fails, proceed with original results
+          print('Screenshot capture failed with error: $screenshotError');
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => EmailAnalysisResults(
+                    results: result,
+                    fileName: _fileName!,
+                    onAnalyzeAgain: () {
+                      Navigator.pop(context);
+                      _resetState();
+                    },
+                  ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _errorMessage = 'Analysis failed: $e';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Analysis failed: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   // --- UI STRUCTURE ---
   @override
   Widget build(BuildContext context) {
-    // --- UPDATED COLOR PALETTE ---
-    final Color primaryBackgroundColor = Theme.of(context).scaffoldBackgroundColor;
-    final Color cardBackgroundColor = Theme.of(context).cardColor;
-    const Color primaryBlue = Color(0xFF3B82F6);
-    final Color primaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white;
-    const Color secondaryTextColor = Color(0xFF98A2B3);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: primaryBackgroundColor,
+      backgroundColor: EmailColorPalette.getBackgroundColor(isDarkMode),
       appBar: AppBar(
-        backgroundColor: primaryBackgroundColor,
+        backgroundColor: EmailColorPalette.getBackgroundColor(isDarkMode),
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: primaryTextColor),
+          icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
           tooltip: 'Back to Dashboard',
           onPressed: () {
             if (Navigator.canPop(context)) {
@@ -107,53 +247,56 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
             }
           },
         ),
-        title: _buildHeader(primaryTextColor),
+        title: _buildHeader(theme, isDarkMode),
         titleSpacing: 0,
       ),
-      // Removed the floatingActionButton
-
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(10.0),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Container(
-            padding: const EdgeInsets.all(10.0), // Reduced from 32.0 to 16.0
-            decoration: BoxDecoration(
-              color: cardBackgroundColor,
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _fileName == null
-                      ? ''
-                      : 'Analysis result for the uploaded file.',
-                  style: const TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 16,
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Container(
+              padding: const EdgeInsets.all(24.0),
+              decoration: BoxDecoration(
+                color: EmailColorPalette.getSurfaceColor(isDarkMode),
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(
+                  color: EmailColorPalette.getPrimaryWithOpacity(
+                    isDarkMode,
+                    0.1,
                   ),
+                  width: 1,
                 ),
-                const SizedBox(height: 24),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-                  child: _fileName == null
-                      ? _buildDropzone(
-                          primaryBlue: primaryBlue,
-                          primaryTextColor: primaryTextColor,
-                          secondaryTextColor: secondaryTextColor,
-                        )
-                      : _buildAnalysisResult(
-                          primaryTextColor: primaryTextColor,
-                          secondaryTextColor: secondaryTextColor,
-                          primaryBlue: primaryBlue,
-                        ),
-                ),
-              ],
+                boxShadow: [
+                  BoxShadow(
+                    color: EmailColorPalette.getPrimaryWithOpacity(
+                      isDarkMode,
+                      0.1,
+                    ),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_errorMessage != null)
+                    _buildErrorMessage(theme, isDarkMode),
+                  if (_errorMessage != null) const SizedBox(height: 24),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                    child:
+                        _isAnalyzing
+                            ? _buildAnalyzingState(theme, isDarkMode)
+                            : _buildDropzone(theme, isDarkMode),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -163,17 +306,39 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
 
   // --- UI HELPER WIDGETS ---
 
-  Widget _buildHeader(Color textColor) {
+  Widget _buildHeader(ThemeData theme, bool isDarkMode) {
+    final colorScheme = theme.colorScheme;
+
     return Row(
       children: [
-        
-        Icon(Icons.email_outlined, color: Color(0xFF3B82F6), size: 24),
-
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            gradient: EmailColorPalette.getPrimaryGradient(isDarkMode),
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(
+              color: EmailColorPalette.getPrimaryWithOpacity(isDarkMode, 0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: EmailColorPalette.getPrimaryWithOpacity(isDarkMode, 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.email_outlined,
+            color: EmailColorPalette.primary,
+            size: 24,
+          ),
+        ),
         const SizedBox(width: 16),
         Text(
           'Email Analysis',
           style: TextStyle(
-            color: textColor,
+            color: colorScheme.onSurface,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -182,54 +347,76 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
     );
   }
 
-  Widget _buildDropzone({
-    required Color primaryBlue,
-    required Color primaryTextColor,
-    required Color secondaryTextColor,
-  }) {
+  Widget _buildDropzone(ThemeData theme, bool isDarkMode) {
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 48.0, horizontal: 24.0),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12.0),
+        color: EmailColorPalette.getSecondaryColor(isDarkMode),
+        borderRadius: BorderRadius.circular(16.0),
+        border: Border.all(
+          color: EmailColorPalette.getPrimaryWithOpacity(isDarkMode, 0.2),
+          width: 2,
+          style: BorderStyle.solid,
+        ),
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.1),
+              gradient: EmailColorPalette.getPrimaryGradient(isDarkMode),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: EmailColorPalette.getPrimaryWithOpacity(isDarkMode, 0.3),
+                width: 2,
+              ),
             ),
-            child: Icon(Icons.email_outlined, color: primaryBlue, size: 32),
+            child: Icon(
+              Icons.email_outlined,
+              color: EmailColorPalette.primary,
+              size: 32,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
             'Upload Email for Analysis',
             style: TextStyle(
-              color: primaryTextColor,
+              color: colorScheme.onSurface,
               fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          Text(
+            'Supported formats: EML, TXT, MSG',
+            style: TextStyle(
+              color: colorScheme.onSurface.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 32),
           ElevatedButton.icon(
             onPressed: _pickEmailFile,
-            icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+            icon: const Icon(Icons.upload_file_rounded, size: 20),
             label: const Text(
-              'Select EML File',
+              'Select Email File',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: primaryBlue,
+              backgroundColor: EmailColorPalette.primary,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(12.0),
               ),
-              elevation: 0,
+              elevation: 3,
+              shadowColor: EmailColorPalette.getPrimaryWithOpacity(
+                isDarkMode,
+                0.3,
+              ),
             ),
           ),
         ],
@@ -237,86 +424,120 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
     );
   }
 
-  Widget _buildAnalysisResult({
-    required Color primaryTextColor,
-    required Color secondaryTextColor,
-    required Color primaryBlue,
-  }) {
+  Widget _buildAnalyzingState(ThemeData theme, bool isDarkMode) {
+    final colorScheme = theme.colorScheme;
+
     return Container(
-      key: const ValueKey('results'),
+      key: const ValueKey('analyzing'),
       padding: const EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: const Color(0xFF101828).withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
+        color: EmailColorPalette.getSecondaryColor(isDarkMode),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: EmailColorPalette.primary.withValues(alpha: 0.3),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: EmailColorPalette.primary.withValues(alpha: 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: Colors.greenAccent[400],
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Analysis Complete',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('File Name:', style: TextStyle(color: secondaryTextColor)),
-          const SizedBox(height: 4),
-          Text(
-            _fileName ?? 'No file',
-            style: TextStyle(
-              color: primaryTextColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: EmailColorPalette.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-          ),
-          const SizedBox(height: 16),
-          Text('Content Preview:', style: TextStyle(color: secondaryTextColor)),
-          const SizedBox(height: 4),
-          Text(
-            _fileContent ?? '',
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: primaryTextColor.withOpacity(0.8),
-              fontFamily: 'monospace',
-              fontSize: 12,
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  EmailColorPalette.primary,
+                ),
+                strokeWidth: 3,
+              ),
             ),
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _resetState,
-              icon: const Icon(Icons.refresh, size: 20),
-              label: const Text(
-                'Analyze Another File',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue.withOpacity(0.2),
-                foregroundColor: primaryBlue,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                elevation: 0,
-              ),
+          Text(
+            'Analyzing Email',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Scanning "$_fileName" for threats...',
+            style: TextStyle(
+              color: colorScheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'This may take a few moments',
+            style: TextStyle(
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorMessage(ThemeData theme, bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: EmailColorPalette.danger.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: EmailColorPalette.danger.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: EmailColorPalette.danger, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Analysis Failed',
+                  style: TextStyle(
+                    color: EmailColorPalette.danger,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    color: EmailColorPalette.danger,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _errorMessage = null;
+              });
+            },
+            icon: Icon(Icons.close, color: EmailColorPalette.danger, size: 20),
           ),
         ],
       ),

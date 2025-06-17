@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 import '../blocs/auth/auth_bloc.dart';
-import 'login_page.dart';
+
 import '../dashboard/homepage.dart';
 
 class VerificationCodePage extends StatefulWidget {
@@ -62,17 +62,24 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state.status == AuthStatus.success) {
-          // Navigate to login page
+        if (state.status == AuthStatus.authenticated) {
+          // Navigate to home page
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const LoginPage()),
+            MaterialPageRoute(builder: (context) => const HomePage()),
           );
         } else if (state.status == AuthStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage ?? 'An error occurred'),
               backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state.successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.successMessage!),
+              backgroundColor: Colors.green,
             ),
           );
         }
@@ -182,11 +189,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
                   ? null
                   : () {
                 context.read<AuthBloc>().add(
-                  VerifyCodeSubmitted(email: widget.email, code: _code),
-                );
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) =>  Homepage()),
+                  AuthVerifyEmailRequested(email: widget.email, otp: _code),
                 );
                   },
           style: ElevatedButton.styleFrom(
@@ -226,18 +229,26 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
   }
 
   Widget _buildResendText() {
-    return TextButton(
-      onPressed: () {
-        // TODO: Resend code logic
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        return TextButton(
+          onPressed: !state.isLoading
+              ? () {
+                  context.read<AuthBloc>().add(
+                    AuthResendVerificationRequested(email: widget.email),
+                  );
+                }
+              : null,
+          child: Text(
+            'Resend Code',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: const Color.fromARGB(255, 211, 207, 207),
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        );
       },
-      child: Text(
-        'Resend Code',
-        style: GoogleFonts.poppins(
-          fontSize: 13,
-          color: const Color.fromARGB(255, 211, 207, 207),
-          decoration: TextDecoration.underline,
-        ),
-      ),
     );
   }
 }
