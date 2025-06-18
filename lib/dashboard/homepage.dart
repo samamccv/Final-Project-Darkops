@@ -365,19 +365,19 @@ class _HomePageState extends State<HomePage> {
                   ).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.shield_outlined,
                       size: 16,
-                      color: const Color.fromARGB(255, 139, 92, 246),
+                      color: Color.fromARGB(255, 139, 92, 246),
                     ),
-                    const SizedBox(width: 6),
+                    SizedBox(width: 6),
                     Text(
                       'All-time security analysis',
                       style: TextStyle(
-                        color: const Color.fromARGB(255, 139, 92, 246),
+                        color: Color.fromARGB(255, 139, 92, 246),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -750,10 +750,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                     borderRadius: BorderRadius.circular(50),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.timeline_outlined,
                     size: 48,
-                    color: const Color.fromARGB(255, 139, 92, 246),
+                    color: Color.fromARGB(255, 139, 92, 246),
                   ),
                 ),
                 const SizedBox(height: 24),

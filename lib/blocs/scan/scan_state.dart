@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:equatable/equatable.dart';
 import '../../models/scan/scan_models.dart';
+import '../../services/sms_service.dart';
 
 enum ScanStatus {
   initial,
@@ -13,31 +14,26 @@ enum ScanStatus {
   gmailDisconnected,
 }
 
-enum ScanType {
-  sms,
-  email,
-  url,
-  qr,
-  apk,
-}
+enum ScanType { sms, email, url, qr, apk }
 
 class ScanState extends Equatable {
   final ScanStatus status;
   final ScanType? currentScanType;
   final String? errorMessage;
   final double? progress;
-  
+
   // Scan Results
   final SMSAnalysisResponse? smsResult;
   final URLAnalysisResponse? urlResult;
   final EmailAnalysisResponse? emailResult;
   final QRAnalysisResponse? qrResult;
   final APKAnalysisResponse? apkResult;
-  
+
   // Additional Data
   final String? scannedContent;
   final File? scannedFile;
   final List<String>? deviceSMSMessages;
+  final List<DeviceSMSMessage>? deviceSMSMessagesList;
   final bool isGmailConnected;
   final List<Map<String, dynamic>>? gmailEmails;
   final String? lastScanTarget;
@@ -55,6 +51,7 @@ class ScanState extends Equatable {
     this.scannedContent,
     this.scannedFile,
     this.deviceSMSMessages,
+    this.deviceSMSMessagesList,
     this.isGmailConnected = false,
     this.gmailEmails,
     this.lastScanTarget,
@@ -73,6 +70,7 @@ class ScanState extends Equatable {
     String? scannedContent,
     File? scannedFile,
     List<String>? deviceSMSMessages,
+    List<DeviceSMSMessage>? deviceSMSMessagesList,
     bool? isGmailConnected,
     List<Map<String, dynamic>>? gmailEmails,
     String? lastScanTarget,
@@ -90,6 +88,8 @@ class ScanState extends Equatable {
       scannedContent: scannedContent ?? this.scannedContent,
       scannedFile: scannedFile ?? this.scannedFile,
       deviceSMSMessages: deviceSMSMessages ?? this.deviceSMSMessages,
+      deviceSMSMessagesList:
+          deviceSMSMessagesList ?? this.deviceSMSMessagesList,
       isGmailConnected: isGmailConnected ?? this.isGmailConnected,
       gmailEmails: gmailEmails ?? this.gmailEmails,
       lastScanTarget: lastScanTarget ?? this.lastScanTarget,
@@ -110,6 +110,7 @@ class ScanState extends Equatable {
       scannedContent: null,
       scannedFile: null,
       deviceSMSMessages: deviceSMSMessages,
+      deviceSMSMessagesList: deviceSMSMessagesList,
       isGmailConnected: isGmailConnected,
       gmailEmails: gmailEmails,
       lastScanTarget: null,
@@ -190,20 +191,21 @@ class ScanState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        currentScanType,
-        errorMessage,
-        progress,
-        smsResult,
-        urlResult,
-        emailResult,
-        qrResult,
-        apkResult,
-        scannedContent,
-        scannedFile,
-        deviceSMSMessages,
-        isGmailConnected,
-        gmailEmails,
-        lastScanTarget,
-      ];
+    status,
+    currentScanType,
+    errorMessage,
+    progress,
+    smsResult,
+    urlResult,
+    emailResult,
+    qrResult,
+    apkResult,
+    scannedContent,
+    scannedFile,
+    deviceSMSMessages,
+    deviceSMSMessagesList,
+    isGmailConnected,
+    gmailEmails,
+    lastScanTarget,
+  ];
 }

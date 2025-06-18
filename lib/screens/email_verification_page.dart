@@ -26,7 +26,6 @@ class _EmailVerificationPageState extends State<EmailVerificationPage>
   late AnimationController _loadingController;
   late Animation<double> _shakeAnimation;
   late Animation<double> _successAnimation;
-  late Animation<double> _loadingAnimation;
 
   String get otpCode =>
       _otpControllers.map((controller) => controller.text).join();
@@ -61,9 +60,6 @@ class _EmailVerificationPageState extends State<EmailVerificationPage>
     _loadingController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    );
-    _loadingAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _loadingController, curve: Curves.easeInOut),
     );
   }
 

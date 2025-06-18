@@ -37,7 +37,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(context),
-        backgroundColor: Color(0xFF101828), // Updated background color
+        backgroundColor: const Color(0xFF101828), // Updated background color
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
@@ -75,7 +75,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
           ),
         ),
       ),
-      backgroundColor: Color(0xFF101828), // Updated AppBar color
+      backgroundColor: const Color(0xFF101828), // Updated AppBar color
       leading: IconButton(
         icon: const Icon(
           Icons.arrow_back_ios_new,
@@ -152,7 +152,7 @@ class _ForgetPasswordPageState extends State<ForgetPasswordPage> {
                   }
                 : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color.fromARGB(255, 139, 92, 246),
+              backgroundColor: const Color.fromARGB(255, 139, 92, 246),
               padding: const EdgeInsets.symmetric(
                 vertical: 12.0,
                 horizontal: 100.0,

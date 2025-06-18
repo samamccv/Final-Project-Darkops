@@ -1,4 +1,5 @@
 // lib/services/scan_service.dart
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -66,7 +67,7 @@ class ScanService {
     }
   }
 
-  // URL Full Analysis
+  // URL Full Analysis (legacy)
   Future<Map<String, dynamic>> analyzeURLFull(
     URLAnalysisRequest request,
   ) async {
@@ -76,6 +77,19 @@ class ScanService {
         data: request.toJson(),
       );
       return response.data;
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // Comprehensive URL Analysis (matches web frontend)
+  Future<UrlAnalysisResponse> analyzeUrlComprehensive(String url) async {
+    try {
+      final response = await _dio.post(
+        '/ai/url/full-analysis',
+        data: {'url': url},
+      );
+      return UrlAnalysisResponse.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -119,9 +133,20 @@ class ScanService {
       final response = await _dio.post(
         '/ai/email/capture-screenshot',
         data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        options: Options(
+          headers: {'Content-Type': 'multipart/form-data'},
+          responseType: ResponseType.bytes, // Expect binary data
+        ),
       );
-      return response.data['screenshot_path'];
+
+      // Convert binary JPEG data to base64 data URL
+      if (response.data != null && response.data is List<int>) {
+        final bytes = response.data as List<int>;
+        final base64String = base64Encode(bytes);
+        return 'data:image/jpeg;base64,$base64String';
+      }
+
+      return null;
     } catch (e) {
       print('Screenshot capture failed: $e');
       return null;
@@ -136,6 +161,19 @@ class ScanService {
         data: request.toJson(),
       );
       return QRAnalysisResponse.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  // QR Code Phishing Detection (matching Frontend functionality)
+  Future<QRPhishingAnalysisResponse> detectQRPhishing(String content) async {
+    try {
+      final response = await _dio.post(
+        '/ai/qr/detect-phishing',
+        data: {'content': content},
+      );
+      return QRPhishingAnalysisResponse.fromJson(response.data);
     } catch (e) {
       throw _handleError(e);
     }
@@ -255,6 +293,22 @@ class ScanService {
           description: scanResponse.prediction,
         ),
       ];
+    } else if (scanResponse is UrlAnalysisResponse) {
+      final phishingAnalysis = scanResponse.phishingAnalysis;
+      final isSafe = phishingAnalysis?.isSafe ?? true;
+      final analysisConfidence = phishingAnalysis?.confidence ?? 0.0;
+
+      threatScore = isSafe ? 2.0 : 8.0;
+      threatLevel = isSafe ? 'LOW' : 'HIGH';
+      sr = isSafe ? 'LOW' : 'HIGH';
+      confidence = analysisConfidence;
+      findings = [
+        Finding(
+          type: isSafe ? 'SAFE' : 'MALICIOUS',
+          severity: threatLevel,
+          description: phishingAnalysis?.prediction ?? 'URL analyzed',
+        ),
+      ];
     } else if (scanResponse is QRAnalysisResponse) {
       threatScore = scanResponse.isUrl ? 5.0 : 2.0;
       threatLevel = scanResponse.isUrl ? 'MEDIUM' : 'LOW';
@@ -325,6 +379,21 @@ class ScanService {
   Future<URLAnalysisResponse> analyzeURLWithSubmission(String url) async {
     final request = URLAnalysisRequest(url: url);
     final response = await analyzeURL(request);
+
+    final submission = _createScanSubmission(
+      scanType: 'URL',
+      target: url,
+      scanResponse: response,
+    );
+    await submitScanResult(submission);
+
+    return response;
+  }
+
+  Future<UrlAnalysisResponse> analyzeUrlComprehensiveWithSubmission(
+    String url,
+  ) async {
+    final response = await analyzeUrlComprehensive(url);
 
     final submission = _createScanSubmission(
       scanType: 'URL',

@@ -86,7 +86,7 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
       },
       child: Scaffold(
         appBar: _buildAppBar(),
-        backgroundColor: Color(0xFF101828),
+        backgroundColor: const Color(0xFF101828),
         body: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -121,9 +121,13 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
           ),
         ),
       ),
-      backgroundColor: Color(0xFF101828),
+      backgroundColor: const Color(0xFF101828),
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+        icon: const Icon(
+          Icons.arrow_back_ios_new,
+          color: Colors.white,
+          size: 20,
+        ),
         onPressed: () => Navigator.pop(context),
       ),
       centerTitle: true,
@@ -188,15 +192,15 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
               isDisabled
                   ? null
                   : () {
-                context.read<AuthBloc>().add(
-                  AuthVerifyEmailRequested(email: widget.email, otp: _code),
-                );
+                    context.read<AuthBloc>().add(
+                      AuthVerifyEmailRequested(email: widget.email, otp: _code),
+                    );
                   },
           style: ElevatedButton.styleFrom(
             backgroundColor:
                 isDisabled
-                    ? const Color(0xFF6A5B8E).withOpacity(0.5)
-                    : Color.fromARGB(255, 139, 92, 246),
+                    ? const Color(0xFF6A5B8E).withValues(alpha: 0.5)
+                    : const Color.fromARGB(255, 139, 92, 246),
             padding: const EdgeInsets.symmetric(
               vertical: 12.0,
               horizontal: 100.0,
@@ -232,13 +236,14 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         return TextButton(
-          onPressed: !state.isLoading
-              ? () {
-                  context.read<AuthBloc>().add(
-                    AuthResendVerificationRequested(email: widget.email),
-                  );
-                }
-              : null,
+          onPressed:
+              !state.isLoading
+                  ? () {
+                    context.read<AuthBloc>().add(
+                      AuthResendVerificationRequested(email: widget.email),
+                    );
+                  }
+                  : null,
           child: Text(
             'Resend Code',
             style: GoogleFonts.poppins(

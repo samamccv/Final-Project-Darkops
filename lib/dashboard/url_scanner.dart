@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../services/scan_service.dart';
+import 'url_analysis_results.dart';
 
 /// URL Feature Color Palette
 class URLColorPalette {
   static const Color primary = Color(0xFFF59E0B); // Orange (245, 158, 11)
   static const Color primaryLight = Color(0xFFFBBF24); // Lighter orange
-  static const Color primaryDark = Color(0xED8936); // Darker orange
+  static const Color primaryDark = Color(0x00ed8936); // Darker orange
 
   // Light mode colors
   static const Color lightBackground = Color(0xFFFFFBF5);
@@ -55,51 +57,94 @@ class URLScannerPage extends StatefulWidget {
 
 class _URLScannerPageState extends State<URLScannerPage> {
   final TextEditingController _controller = TextEditingController();
-  bool _scanDone = false;
-  String? _scannedURL;
+  final ScanService _scanService = ScanService();
   bool _isAnalyzing = false;
+  String? _error;
 
-  void _scanURL() {
+  bool _validateUrl(String url) {
+    try {
+      Uri.parse(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _scanURL() async {
     final url = _controller.text.trim();
-    if (url.isEmpty || Uri.tryParse(url)?.hasAbsolutePath != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter a valid URL'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+
+    if (url.isEmpty) {
+      setState(() {
+        _error = 'Please enter a URL';
+      });
+      return;
+    }
+
+    // Add https:// if protocol is missing
+    String urlToScan = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      urlToScan = 'https://$url';
+    }
+
+    if (!_validateUrl(urlToScan)) {
+      setState(() {
+        _error = 'Please enter a valid URL';
+      });
       return;
     }
 
     setState(() {
+      _error = null;
       _isAnalyzing = true;
     });
 
-    // Simulate analysis time
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final results = await _scanService.analyzeUrlComprehensiveWithSubmission(
+        urlToScan,
+      );
+
       if (mounted) {
         setState(() {
-          _scanDone = true;
-          _scannedURL = url;
           _isAnalyzing = false;
+        });
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => UrlAnalysisResults(
+                  results: results,
+                  scannedUrl: urlToScan,
+                  onScanAgain: () {
+                    Navigator.pop(context);
+                    _reset();
+                  },
+                ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _error = 'Analysis failed: ${e.toString()}';
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('URL analysis completed: "$url"'),
-            backgroundColor: URLColorPalette.primary,
+            content: Text('URL Analysis Failed: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.pop(context, url);
       }
-    });
+    }
   }
 
   void _reset() {
     setState(() {
       _controller.clear();
-      _scanDone = false;
-      _scannedURL = null;
+      _error = null;
       _isAnalyzing = false;
     });
   }
@@ -174,20 +219,28 @@ class _URLScannerPageState extends State<URLScannerPage> {
                     child: TextField(
                       controller: _controller,
                       keyboardType: TextInputType.url,
-                      enabled: !_isAnalyzing && !_scanDone,
+                      enabled: !_isAnalyzing,
                       style: TextStyle(color: colorScheme.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Enter a URL (e.g., https://example.com)',
                         hintStyle: TextStyle(
                           color: colorScheme.onSurface.withValues(alpha: 0.5),
                         ),
-                        prefixIcon: Icon(
+                        prefixIcon: const Icon(
                           Icons.link_rounded,
                           color: URLColorPalette.primary,
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.all(16),
                       ),
+                      onChanged: (value) {
+                        if (_error != null) {
+                          setState(() {
+                            _error = null;
+                          });
+                        }
+                      },
+                      onSubmitted: (_) => _scanURL(),
                     ),
                   ).animate().slide(
                     begin: const Offset(-1, 0),
@@ -195,16 +248,28 @@ class _URLScannerPageState extends State<URLScannerPage> {
                     duration: 500.ms,
                   ),
 
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      _error!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: colorScheme.error,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 20),
 
                   // Analyze button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: (_isAnalyzing || _scanDone) ? null : _scanURL,
+                      onPressed: _isAnalyzing ? null : _scanURL,
                       icon:
                           _isAnalyzing
-                              ? SizedBox(
+                              ? const SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -239,184 +304,6 @@ class _URLScannerPageState extends State<URLScannerPage> {
                     curve: Curves.easeOut,
                     duration: 500.ms,
                   ),
-
-                  // Results section
-                  if (_scanDone) ...[
-                    const SizedBox(height: 32),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: URLColorPalette.getSecondaryColor(isDarkMode),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: URLColorPalette.success.withValues(alpha: 0.3),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: URLColorPalette.success.withValues(
-                              alpha: 0.1,
-                            ),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: URLColorPalette.success.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  color: URLColorPalette.success,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Analysis Complete',
-                                      style: TextStyle(
-                                        color: colorScheme.onSurface,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(
-                                      'URL security check completed',
-                                      style: TextStyle(
-                                        color: URLColorPalette.success,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.03,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.language_outlined,
-                                      color: URLColorPalette.primary,
-                                      size: 16,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Scanned URL',
-                                      style: TextStyle(
-                                        color: URLColorPalette.primary,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        URLColorPalette.getPrimaryWithOpacity(
-                                          isDarkMode,
-                                          0.05,
-                                        ),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color:
-                                          URLColorPalette.getPrimaryWithOpacity(
-                                            isDarkMode,
-                                            0.1,
-                                          ),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    _scannedURL ?? '',
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface.withValues(
-                                        alpha: 0.8,
-                                      ),
-                                      fontFamily: 'monospace',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _reset,
-                              icon: const Icon(Icons.refresh_rounded, size: 20),
-                              label: const Text(
-                                'Analyze Another URL',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    URLColorPalette.getPrimaryWithOpacity(
-                                      isDarkMode,
-                                      0.1,
-                                    ),
-                                foregroundColor: URLColorPalette.primary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                ),
-                                elevation: 0,
-                                side: BorderSide(
-                                  color: URLColorPalette.getPrimaryWithOpacity(
-                                    isDarkMode,
-                                    0.2,
-                                  ),
-                                  width: 1,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().slide(
-                      begin: const Offset(1, 0),
-                      curve: Curves.easeOut,
-                      duration: 500.ms,
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -448,7 +335,7 @@ class _URLScannerPageState extends State<URLScannerPage> {
               ),
             ],
           ),
-          child: Icon(
+          child: const Icon(
             Icons.language_outlined,
             color: URLColorPalette.primary,
             size: 24,

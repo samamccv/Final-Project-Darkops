@@ -215,6 +215,7 @@ class URLAnalysisRequest extends ScanRequest {
   List<Object> get props => [url];
 }
 
+// Legacy URL Analysis Response (kept for backward compatibility)
 class URLAnalysisResponse extends ScanResponse {
   final String url;
   final bool isSafe;
@@ -242,6 +243,54 @@ class URLAnalysisResponse extends ScanResponse {
 
   @override
   List<Object?> get props => [url, isSafe, confidence, prediction, urlAnalysis];
+}
+
+// Comprehensive URL Analysis Response (matches web frontend)
+class UrlAnalysisResponse extends ScanResponse {
+  final UrlPhishingAnalysis? phishingAnalysis;
+  final UrlAnalysisData? urlAnalysis;
+  final String? analysisTimestamp;
+  final List<UrlScanEngine>? scanEngines;
+  final List<UrlFinding>? findings;
+
+  const UrlAnalysisResponse({
+    this.phishingAnalysis,
+    this.urlAnalysis,
+    this.analysisTimestamp,
+    this.scanEngines,
+    this.findings,
+  });
+
+  factory UrlAnalysisResponse.fromJson(Map<String, dynamic> json) {
+    return UrlAnalysisResponse(
+      phishingAnalysis:
+          json['phishing_analysis'] != null
+              ? UrlPhishingAnalysis.fromJson(json['phishing_analysis'])
+              : null,
+      urlAnalysis:
+          json['url_analysis'] != null
+              ? UrlAnalysisData.fromJson(json['url_analysis'])
+              : null,
+      analysisTimestamp: json['analysis_timestamp'],
+      scanEngines:
+          (json['scanEngines'] as List?)
+              ?.map((e) => UrlScanEngine.fromJson(e))
+              .toList(),
+      findings:
+          (json['findings'] as List?)
+              ?.map((e) => UrlFinding.fromJson(e))
+              .toList(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    phishingAnalysis,
+    urlAnalysis,
+    analysisTimestamp,
+    scanEngines,
+    findings,
+  ];
 }
 
 // Email Scan Models
@@ -646,6 +695,270 @@ class QRAnalysisResponse extends ScanResponse {
   ];
 }
 
+// QR Phishing Analysis Response (matching Frontend)
+class QRPhishingAnalysisResponse extends ScanResponse {
+  final bool isPhishing;
+  final double confidence;
+  final String? prediction;
+  final String? url;
+  final List<String>? riskFactors;
+  final List<String>? safetyIndicators;
+  final QRUrlAnalysisData? urlAnalysis;
+  final QRDnsInformation? dnsInformation;
+  final QRSecurityAssessment? securityAssessment;
+  final QRRecommendations? recommendations;
+  final String? analysisTimestamp;
+
+  const QRPhishingAnalysisResponse({
+    required this.isPhishing,
+    required this.confidence,
+    this.prediction,
+    this.url,
+    this.riskFactors,
+    this.safetyIndicators,
+    this.urlAnalysis,
+    this.dnsInformation,
+    this.securityAssessment,
+    this.recommendations,
+    this.analysisTimestamp,
+  });
+
+  factory QRPhishingAnalysisResponse.fromJson(Map<String, dynamic> json) {
+    return QRPhishingAnalysisResponse(
+      isPhishing: json['is_phishing'] ?? false,
+      confidence: (json['confidence'] ?? 0.0).toDouble(),
+      prediction: json['prediction'],
+      url: json['url'],
+      riskFactors: (json['risk_factors'] as List?)?.cast<String>(),
+      safetyIndicators: (json['safety_indicators'] as List?)?.cast<String>(),
+      urlAnalysis:
+          json['url_analysis'] != null
+              ? QRUrlAnalysisData.fromJson(json['url_analysis'])
+              : null,
+      dnsInformation:
+          json['dns_information'] != null
+              ? QRDnsInformation.fromJson(json['dns_information'])
+              : null,
+      securityAssessment:
+          json['security_assessment'] != null
+              ? QRSecurityAssessment.fromJson(json['security_assessment'])
+              : null,
+      recommendations:
+          json['recommendations'] != null
+              ? QRRecommendations.fromJson(json['recommendations'])
+              : null,
+      analysisTimestamp: json['analysis_timestamp'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    isPhishing,
+    confidence,
+    prediction,
+    url,
+    riskFactors,
+    safetyIndicators,
+    urlAnalysis,
+    dnsInformation,
+    securityAssessment,
+    recommendations,
+    analysisTimestamp,
+  ];
+}
+
+// Supporting classes for QR Phishing Analysis
+class QRUrlAnalysisData extends Equatable {
+  final QRBasicInfo? basicInfo;
+  final QRSecurity? security;
+  final QRScanInfo? scanInfo;
+
+  const QRUrlAnalysisData({this.basicInfo, this.security, this.scanInfo});
+
+  factory QRUrlAnalysisData.fromJson(Map<String, dynamic> json) {
+    return QRUrlAnalysisData(
+      basicInfo:
+          json['basic_info'] != null
+              ? QRBasicInfo.fromJson(json['basic_info'])
+              : null,
+      security:
+          json['security'] != null
+              ? QRSecurity.fromJson(json['security'])
+              : null,
+      scanInfo:
+          json['scan_info'] != null
+              ? QRScanInfo.fromJson(json['scan_info'])
+              : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [basicInfo, security, scanInfo];
+}
+
+class QRBasicInfo extends Equatable {
+  final String? domain;
+  final String? ip;
+  final String? country;
+  final String? server;
+  final String? securityState;
+  final String? finalUrl;
+
+  const QRBasicInfo({
+    this.domain,
+    this.ip,
+    this.country,
+    this.server,
+    this.securityState,
+    this.finalUrl,
+  });
+
+  factory QRBasicInfo.fromJson(Map<String, dynamic> json) {
+    return QRBasicInfo(
+      domain: json['domain'],
+      ip: json['ip'],
+      country: json['country'],
+      server: json['server'],
+      securityState: json['security_state'],
+      finalUrl: json['final_url'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    domain,
+    ip,
+    country,
+    server,
+    securityState,
+    finalUrl,
+  ];
+}
+
+class QRSecurity extends Equatable {
+  final bool? malicious;
+  final int? score;
+
+  const QRSecurity({this.malicious, this.score});
+
+  factory QRSecurity.fromJson(Map<String, dynamic> json) {
+    return QRSecurity(malicious: json['malicious'], score: json['score']);
+  }
+
+  @override
+  List<Object?> get props => [malicious, score];
+}
+
+class QRScanInfo extends Equatable {
+  final String? screenshotUrl;
+
+  const QRScanInfo({this.screenshotUrl});
+
+  factory QRScanInfo.fromJson(Map<String, dynamic> json) {
+    return QRScanInfo(screenshotUrl: json['screenshot_url']);
+  }
+
+  @override
+  List<Object?> get props => [screenshotUrl];
+}
+
+class QRDnsInformation extends Equatable {
+  final String domain;
+  final List<String> ipAddresses;
+  final String primaryIp;
+  final Map<String, dynamic> dnsRecords;
+  final Map<String, dynamic> reverseDns;
+  final Map<String, dynamic> dnsAnalysis;
+  final String dnsTimestamp;
+
+  const QRDnsInformation({
+    required this.domain,
+    required this.ipAddresses,
+    required this.primaryIp,
+    required this.dnsRecords,
+    required this.reverseDns,
+    required this.dnsAnalysis,
+    required this.dnsTimestamp,
+  });
+
+  factory QRDnsInformation.fromJson(Map<String, dynamic> json) {
+    return QRDnsInformation(
+      domain: json['domain'] ?? '',
+      ipAddresses: (json['ip_addresses'] as List?)?.cast<String>() ?? [],
+      primaryIp: json['primary_ip'] ?? '',
+      dnsRecords: json['dns_records'] ?? {},
+      reverseDns: json['reverse_dns'] ?? {},
+      dnsAnalysis: json['dns_analysis'] ?? {},
+      dnsTimestamp: json['dns_timestamp'] ?? '',
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    domain,
+    ipAddresses,
+    primaryIp,
+    dnsRecords,
+    reverseDns,
+    dnsAnalysis,
+    dnsTimestamp,
+  ];
+}
+
+class QRSecurityAssessment extends Equatable {
+  final String sslStatus;
+  final String? domainAge;
+  final double? reputationScore;
+  final List<String>? threatCategories;
+
+  const QRSecurityAssessment({
+    required this.sslStatus,
+    this.domainAge,
+    this.reputationScore,
+    this.threatCategories,
+  });
+
+  factory QRSecurityAssessment.fromJson(Map<String, dynamic> json) {
+    return QRSecurityAssessment(
+      sslStatus: json['ssl_status'] ?? '',
+      domainAge: json['domain_age'],
+      reputationScore: json['reputation_score']?.toDouble(),
+      threatCategories: (json['threat_categories'] as List?)?.cast<String>(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    sslStatus,
+    domainAge,
+    reputationScore,
+    threatCategories,
+  ];
+}
+
+class QRRecommendations extends Equatable {
+  final String userAction;
+  final List<String> safetyTips;
+  final List<String>? additionalChecks;
+
+  const QRRecommendations({
+    required this.userAction,
+    required this.safetyTips,
+    this.additionalChecks,
+  });
+
+  factory QRRecommendations.fromJson(Map<String, dynamic> json) {
+    return QRRecommendations(
+      userAction: json['user_action'] ?? '',
+      safetyTips: (json['safety_tips'] as List?)?.cast<String>() ?? [],
+      additionalChecks: (json['additional_checks'] as List?)?.cast<String>(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [userAction, safetyTips, additionalChecks];
+}
+
 // APK Scan Models
 class APKAnalysisResponse extends ScanResponse {
   final String filename;
@@ -750,4 +1063,518 @@ class Finding extends Equatable {
 
   @override
   List<Object?> get props => [type, severity, description, details];
+}
+
+// URL Analysis Supporting Classes
+class UrlPhishingAnalysis extends Equatable {
+  final String? url;
+  final bool? isSafe;
+  final double? confidence;
+  final String? prediction;
+
+  const UrlPhishingAnalysis({
+    this.url,
+    this.isSafe,
+    this.confidence,
+    this.prediction,
+  });
+
+  factory UrlPhishingAnalysis.fromJson(Map<String, dynamic> json) {
+    return UrlPhishingAnalysis(
+      url: json['url'],
+      isSafe: json['is_safe'],
+      confidence: json['confidence']?.toDouble(),
+      prediction: json['prediction'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [url, isSafe, confidence, prediction];
+}
+
+class UrlAnalysisData extends Equatable {
+  final UrlBasicInfo? basicInfo;
+  final List<dynamic>? technologies;
+  final UrlBehavior? behavior;
+  final UrlSecurity? security;
+  final List<dynamic>? consoleMessages;
+  final List<dynamic>? cookies;
+  final UrlScanInfo? scanInfo;
+  final UrlEnhancedSecurity? enhancedSecurity;
+  final UrlReputation? reputation;
+  final UrlTechnologyStack? technologyStack;
+
+  const UrlAnalysisData({
+    this.basicInfo,
+    this.technologies,
+    this.behavior,
+    this.security,
+    this.consoleMessages,
+    this.cookies,
+    this.scanInfo,
+    this.enhancedSecurity,
+    this.reputation,
+    this.technologyStack,
+  });
+
+  factory UrlAnalysisData.fromJson(Map<String, dynamic> json) {
+    return UrlAnalysisData(
+      basicInfo:
+          json['basic_info'] != null
+              ? UrlBasicInfo.fromJson(json['basic_info'])
+              : null,
+      technologies: json['technologies'],
+      behavior:
+          json['behavior'] != null
+              ? UrlBehavior.fromJson(json['behavior'])
+              : null,
+      security:
+          json['security'] != null
+              ? UrlSecurity.fromJson(json['security'])
+              : null,
+      consoleMessages: json['console_messages'],
+      cookies: json['cookies'],
+      scanInfo:
+          json['scan_info'] != null
+              ? UrlScanInfo.fromJson(json['scan_info'])
+              : null,
+      enhancedSecurity:
+          json['enhanced_security'] != null
+              ? UrlEnhancedSecurity.fromJson(json['enhanced_security'])
+              : null,
+      reputation:
+          json['reputation'] != null
+              ? UrlReputation.fromJson(json['reputation'])
+              : null,
+      technologyStack:
+          json['technology_stack'] != null
+              ? UrlTechnologyStack.fromJson(json['technology_stack'])
+              : null,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    basicInfo,
+    technologies,
+    behavior,
+    security,
+    consoleMessages,
+    cookies,
+    scanInfo,
+    enhancedSecurity,
+    reputation,
+    technologyStack,
+  ];
+}
+
+class UrlBasicInfo extends Equatable {
+  final String? domain;
+  final String? ip;
+  final String? country;
+  final String? server;
+  final String? securityState;
+  final String? finalUrl;
+
+  const UrlBasicInfo({
+    this.domain,
+    this.ip,
+    this.country,
+    this.server,
+    this.securityState,
+    this.finalUrl,
+  });
+
+  factory UrlBasicInfo.fromJson(Map<String, dynamic> json) {
+    return UrlBasicInfo(
+      domain: json['domain'],
+      ip: json['ip'],
+      country: json['country'],
+      server: json['server'],
+      securityState: json['security_state'],
+      finalUrl: json['final_url'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    domain,
+    ip,
+    country,
+    server,
+    securityState,
+    finalUrl,
+  ];
+}
+
+class UrlBehavior extends Equatable {
+  final int? requests;
+  final int? domains;
+  final Map<String, dynamic>? resources;
+  final int? redirects;
+  final int? mixedContent;
+
+  const UrlBehavior({
+    this.requests,
+    this.domains,
+    this.resources,
+    this.redirects,
+    this.mixedContent,
+  });
+
+  factory UrlBehavior.fromJson(Map<String, dynamic> json) {
+    return UrlBehavior(
+      requests: json['requests'],
+      domains: json['domains'],
+      resources: json['resources'],
+      redirects: json['redirects'],
+      mixedContent: json['mixed_content'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    requests,
+    domains,
+    resources,
+    redirects,
+    mixedContent,
+  ];
+}
+
+class UrlSecurity extends Equatable {
+  final bool? malicious;
+  final int? score;
+  final List<String>? categories;
+  final List<String>? brands;
+  final List<String>? threats;
+  final UrlDomSecurity? domSecurity;
+  final List<UrlCertificate>? certificates;
+  final Map<String, dynamic>? securityHeaders;
+
+  const UrlSecurity({
+    this.malicious,
+    this.score,
+    this.categories,
+    this.brands,
+    this.threats,
+    this.domSecurity,
+    this.certificates,
+    this.securityHeaders,
+  });
+
+  factory UrlSecurity.fromJson(Map<String, dynamic> json) {
+    return UrlSecurity(
+      malicious: json['malicious'],
+      score: json['score'],
+      categories: (json['categories'] as List?)?.cast<String>(),
+      brands: (json['brands'] as List?)?.cast<String>(),
+      threats: (json['threats'] as List?)?.cast<String>(),
+      domSecurity:
+          json['dom_security'] != null
+              ? UrlDomSecurity.fromJson(json['dom_security'])
+              : null,
+      certificates:
+          (json['certificates'] as List?)
+              ?.map((e) => UrlCertificate.fromJson(e))
+              .toList(),
+      securityHeaders: json['security_headers'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    malicious,
+    score,
+    categories,
+    brands,
+    threats,
+    domSecurity,
+    certificates,
+    securityHeaders,
+  ];
+}
+
+class UrlDomSecurity extends Equatable {
+  final List<dynamic>? vulnerableJsLibs;
+  final int? externalScripts;
+  final int? forms;
+  final int? passwordFields;
+  final List<dynamic>? suspiciousElements;
+
+  const UrlDomSecurity({
+    this.vulnerableJsLibs,
+    this.externalScripts,
+    this.forms,
+    this.passwordFields,
+    this.suspiciousElements,
+  });
+
+  factory UrlDomSecurity.fromJson(Map<String, dynamic> json) {
+    return UrlDomSecurity(
+      vulnerableJsLibs: json['vulnerable_js_libs'],
+      externalScripts: json['external_scripts'],
+      forms: json['forms'],
+      passwordFields: json['password_fields'],
+      suspiciousElements: json['suspicious_elements'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    vulnerableJsLibs,
+    externalScripts,
+    forms,
+    passwordFields,
+    suspiciousElements,
+  ];
+}
+
+class UrlCertificate extends Equatable {
+  final String? subjectName;
+  final String? issuer;
+  final int? validFrom;
+  final int? validTo;
+
+  const UrlCertificate({
+    this.subjectName,
+    this.issuer,
+    this.validFrom,
+    this.validTo,
+  });
+
+  factory UrlCertificate.fromJson(Map<String, dynamic> json) {
+    return UrlCertificate(
+      subjectName: json['subjectName'],
+      issuer: json['issuer'],
+      validFrom: json['validFrom'],
+      validTo: json['validTo'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [subjectName, issuer, validFrom, validTo];
+}
+
+class UrlScanInfo extends Equatable {
+  final String? scanId;
+  final String? scanResultUrl;
+  final String? screenshotUrl;
+  final String? screenshotPath;
+  final String? scanTime;
+  final String? analysisTime;
+
+  const UrlScanInfo({
+    this.scanId,
+    this.scanResultUrl,
+    this.screenshotUrl,
+    this.screenshotPath,
+    this.scanTime,
+    this.analysisTime,
+  });
+
+  factory UrlScanInfo.fromJson(Map<String, dynamic> json) {
+    return UrlScanInfo(
+      scanId: json['scan_id'],
+      scanResultUrl: json['scan_result_url'],
+      screenshotUrl: json['screenshot_url'],
+      screenshotPath: json['screenshot_path'],
+      scanTime: json['scan_time'],
+      analysisTime: json['analysis_time'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    scanId,
+    scanResultUrl,
+    screenshotUrl,
+    screenshotPath,
+    scanTime,
+    analysisTime,
+  ];
+}
+
+class UrlEnhancedSecurity extends Equatable {
+  final bool? mixedContent;
+  final List<dynamic>? vulnerableLibraries;
+  final bool? suspiciousRedirects;
+  final bool? insecureCookies;
+
+  const UrlEnhancedSecurity({
+    this.mixedContent,
+    this.vulnerableLibraries,
+    this.suspiciousRedirects,
+    this.insecureCookies,
+  });
+
+  factory UrlEnhancedSecurity.fromJson(Map<String, dynamic> json) {
+    return UrlEnhancedSecurity(
+      mixedContent: json['mixed_content'],
+      vulnerableLibraries: json['vulnerable_libraries'],
+      suspiciousRedirects: json['suspicious_redirects'],
+      insecureCookies: json['insecure_cookies'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    mixedContent,
+    vulnerableLibraries,
+    suspiciousRedirects,
+    insecureCookies,
+  ];
+}
+
+class UrlReputation extends Equatable {
+  final UrlDomainAge? domainAge;
+  final UrlSslValidity? sslValidity;
+  final String? blacklistStatus;
+
+  const UrlReputation({this.domainAge, this.sslValidity, this.blacklistStatus});
+
+  factory UrlReputation.fromJson(Map<String, dynamic> json) {
+    return UrlReputation(
+      domainAge:
+          json['domain_age'] != null
+              ? UrlDomainAge.fromJson(json['domain_age'])
+              : null,
+      sslValidity:
+          json['ssl_validity'] != null
+              ? UrlSslValidity.fromJson(json['ssl_validity'])
+              : null,
+      blacklistStatus: json['blacklist_status'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [domainAge, sslValidity, blacklistStatus];
+}
+
+class UrlDomainAge extends Equatable {
+  final String? error;
+  final String? registrationDate;
+  final int? ageDays;
+
+  const UrlDomainAge({this.error, this.registrationDate, this.ageDays});
+
+  factory UrlDomainAge.fromJson(Map<String, dynamic> json) {
+    return UrlDomainAge(
+      error: json['error'],
+      registrationDate: json['registration_date'],
+      ageDays: json['age_days'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [error, registrationDate, ageDays];
+}
+
+class UrlSslValidity extends Equatable {
+  final bool? valid;
+  final String? reason;
+
+  const UrlSslValidity({this.valid, this.reason});
+
+  factory UrlSslValidity.fromJson(Map<String, dynamic> json) {
+    return UrlSslValidity(valid: json['valid'], reason: json['reason']);
+  }
+
+  @override
+  List<Object?> get props => [valid, reason];
+}
+
+class UrlTechnologyStack extends Equatable {
+  final String? server;
+  final List<String>? frameworks;
+  final List<String>? analytics;
+  final String? cms;
+
+  const UrlTechnologyStack({
+    this.server,
+    this.frameworks,
+    this.analytics,
+    this.cms,
+  });
+
+  factory UrlTechnologyStack.fromJson(Map<String, dynamic> json) {
+    return UrlTechnologyStack(
+      server: json['server'],
+      frameworks: (json['frameworks'] as List?)?.cast<String>(),
+      analytics: (json['analytics'] as List?)?.cast<String>(),
+      cms: json['cms'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [server, frameworks, analytics, cms];
+}
+
+class UrlScanEngine extends Equatable {
+  final String name;
+  final String result;
+  final double confidence;
+  final String? riskLevel;
+  final String? details;
+  final String? version;
+  final String? updateDate;
+
+  const UrlScanEngine({
+    required this.name,
+    required this.result,
+    required this.confidence,
+    this.riskLevel,
+    this.details,
+    this.version,
+    this.updateDate,
+  });
+
+  factory UrlScanEngine.fromJson(Map<String, dynamic> json) {
+    return UrlScanEngine(
+      name: json['name'] ?? '',
+      result: json['result'] ?? '',
+      confidence: json['confidence']?.toDouble() ?? 0.0,
+      riskLevel: json['risk_level'],
+      details: json['details'],
+      version: json['version'],
+      updateDate: json['updateDate'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+    name,
+    result,
+    confidence,
+    riskLevel,
+    details,
+    version,
+    updateDate,
+  ];
+}
+
+class UrlFinding extends Equatable {
+  final String type;
+  final String description;
+  final String severity;
+  final Map<String, dynamic>? details;
+
+  const UrlFinding({
+    required this.type,
+    required this.description,
+    required this.severity,
+    this.details,
+  });
+
+  factory UrlFinding.fromJson(Map<String, dynamic> json) {
+    return UrlFinding(
+      type: json['type'] ?? '',
+      description: json['description'] ?? '',
+      severity: json['severity'] ?? '',
+      details: json['details'],
+    );
+  }
+
+  @override
+  List<Object?> get props => [type, description, severity, details];
 }

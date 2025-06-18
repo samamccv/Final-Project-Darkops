@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../services/qr_analysis_manager.dart';
+import '../services/qr_analysis_service.dart';
+import '../services/api_seevice.dart';
+import '../widgets/qr_scanner/enhanced_qr_results.dart';
+import '../widgets/qr_scanner/url_detection_results.dart';
 
 /// QR Feature Color Palette
 class QRColorPalette {
@@ -55,15 +60,64 @@ class QRScannerPage extends StatefulWidget {
 }
 
 class _QRScannerPageState extends State<QRScannerPage> {
-  MobileScannerController controller = MobileScannerController();
+  MobileScannerController controller = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    returnImage: false,
+  );
   String? scannedResult;
   bool hasScanned = false;
   bool isCameraActive = true;
+  QRAnalysisManager? _analysisManager;
+
+  @override
+  void initState() {
+    super.initState();
+    _analysisManager = QRAnalysisManager(apiService: ApiService());
+  }
 
   @override
   void dispose() {
-    controller.dispose();
+    try {
+      controller.dispose();
+    } catch (e) {
+      // Ignore disposal errors
+      print('Camera disposal error: $e');
+    }
+    _analysisManager?.dispose();
     super.dispose();
+  }
+
+  /// Safely restart the camera controller
+  Future<void> _restartCamera() async {
+    try {
+      if (mounted) {
+        setState(() {
+          isCameraActive = false;
+        });
+
+        await controller.stop();
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (mounted) {
+          await controller.start();
+          setState(() {
+            isCameraActive = true;
+            hasScanned = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Camera restart error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Camera restart failed: ${e.toString()}'),
+            backgroundColor: QRColorPalette.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -130,7 +184,46 @@ class _QRScannerPageState extends State<QRScannerPage> {
                 child: Stack(
                   children: [
                     if (isCameraActive)
-                      MobileScanner(controller: controller, onDetect: _onDetect)
+                      MobileScanner(
+                        controller: controller,
+                        onDetect: _onDetect,
+                        errorBuilder: (context, error) {
+                          return Container(
+                            color: QRColorPalette.getSecondaryColor(isDarkMode),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: QRColorPalette.danger,
+                                    size: 48,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Camera Error',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurface,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Please restart the scanner',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurface.withValues(
+                                        alpha: 0.6,
+                                      ),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      )
                     else
                       Container(
                         color: QRColorPalette.getSecondaryColor(isDarkMode),
@@ -146,7 +239,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
                                   ),
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.qr_code_2_outlined,
                                   color: QRColorPalette.primary,
                                   size: 48,
@@ -243,11 +336,10 @@ class _QRScannerPageState extends State<QRScannerPage> {
           ),
 
           // Result Section
-          Expanded(
-            flex: 1,
+          Flexible(
             child: Container(
               margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: QRColorPalette.getSurfaceColor(isDarkMode),
                 borderRadius: BorderRadius.circular(16),
@@ -308,7 +400,7 @@ class _QRScannerPageState extends State<QRScannerPage> {
               ),
             ],
           ),
-          child: Icon(
+          child: const Icon(
             Icons.qr_code_2_outlined,
             color: QRColorPalette.primary,
             size: 24,
@@ -332,34 +424,35 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
+        const Icon(
           Icons.qr_code_scanner_rounded,
           color: QRColorPalette.primary,
-          size: 32,
+          size: 24,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
         Text(
-          isCameraActive
-              ? 'Position QR code within the frame'
-              : 'Camera is paused',
+          isCameraActive ? 'Position QR code within frame' : 'Camera paused',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 13,
             color: colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
         Text(
-          isCameraActive
-              ? 'The QR code will be scanned automatically'
-              : 'Tap the play button to resume scanning',
+          isCameraActive ? 'Auto scan' : 'Tap play',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 11,
             color: colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -370,38 +463,42 @@ class _QRScannerPageState extends State<QRScannerPage> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: QRColorPalette.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.check_circle_outline_rounded,
                 color: QRColorPalette.success,
-                size: 20,
+                size: 16,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'QR Code Detected',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       color: colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
+                  const Text(
                     'Successfully scanned',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 10,
                       color: QRColorPalette.success,
                       fontWeight: FontWeight.w500,
                     ),
@@ -411,27 +508,29 @@ class _QRScannerPageState extends State<QRScannerPage> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: QRColorPalette.getPrimaryWithOpacity(isDarkMode, 0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: QRColorPalette.getPrimaryWithOpacity(isDarkMode, 0.1),
+        const SizedBox(height: 8),
+        Flexible(
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: QRColorPalette.getPrimaryWithOpacity(isDarkMode, 0.05),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: QRColorPalette.getPrimaryWithOpacity(isDarkMode, 0.1),
+              ),
             ),
-          ),
-          child: Text(
-            scannedResult ?? '',
-            style: TextStyle(
-              fontSize: 14,
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'monospace',
+            child: Text(
+              scannedResult ?? '',
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'monospace',
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -444,30 +543,158 @@ class _QRScannerPageState extends State<QRScannerPage> {
       hasScanned = true;
       final String? code = barcodes.first.rawValue;
 
-      setState(() {
-        scannedResult = code;
-        isCameraActive = false;
-      });
+      if (code != null && code.isNotEmpty) {
+        setState(() {
+          scannedResult = code;
+          isCameraActive = false;
+        });
 
-      controller.stop();
+        controller.stop();
 
-      // Show success feedback
+        // Start comprehensive analysis workflow
+        _performQRAnalysis(code);
+      }
+    }
+  }
+
+  /// Perform comprehensive QR analysis matching frontend workflow
+  Future<void> _performQRAnalysis(String content) async {
+    try {
+      // Show initial detection feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'QR Code scanned: ${code?.substring(0, 30) ?? ''}${(code?.length ?? 0) > 30 ? '...' : ''}',
-          ),
-          backgroundColor: QRColorPalette.success,
+          content: const Text('QR Code detected - Starting analysis...'),
+          backgroundColor: QRColorPalette.primary,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
         ),
       );
 
-      // Auto navigate after a short delay
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          Navigator.pop(context, scannedResult);
-        }
-      });
+      // Perform basic analysis (no automatic URL security analysis)
+      final result = await _analysisManager!.analyzeQRCode(content);
+
+      // Show enhanced results
+      if (mounted) {
+        _showEnhancedResults(result);
+      }
+    } catch (e) {
+      // Show error feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Analysis failed: ${e.toString()}'),
+            backgroundColor: QRColorPalette.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+
+        // Fallback to simple result display
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context, scannedResult);
+          }
+        });
+      }
     }
+  }
+
+  /// Show enhanced results with comprehensive analysis
+  void _showEnhancedResults(QRAnalysisResult result) {
+    // For URLs, show the URL detection results first (opt-in security analysis)
+    if (result.isUrl) {
+      _showUrlDetectionResults(result);
+    } else {
+      // For non-URLs, show the standard enhanced results
+      _showStandardResults(result);
+    }
+  }
+
+  /// Show URL detection results with opt-in security analysis
+  void _showUrlDetectionResults(QRAnalysisResult result) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder:
+                (context, scrollController) => SingleChildScrollView(
+                  controller: scrollController,
+                  child: UrlDetectionResults(
+                    analysisResult: result,
+                    onClose: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(scannedResult);
+                    },
+                    onSecurityAnalysisComplete: (securityResult) {
+                      // Close the URL detection sheet and show comprehensive results
+                      Navigator.of(context).pop();
+                      _showComprehensiveSecurityResults(securityResult);
+                    },
+                  ),
+                ),
+          ),
+    );
+  }
+
+  /// Show comprehensive security analysis results (matching frontend format)
+  void _showComprehensiveSecurityResults(QRAnalysisResult securityResult) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.9,
+            minChildSize: 0.7,
+            maxChildSize: 0.95,
+            builder:
+                (context, scrollController) => SingleChildScrollView(
+                  controller: scrollController,
+                  child: EnhancedQRResults(
+                    analysisResult: securityResult,
+                    onClose: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(scannedResult);
+                    },
+                  ),
+                ),
+          ),
+    );
+  }
+
+  /// Show standard results for non-URL content
+  void _showStandardResults(QRAnalysisResult result) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder:
+                (context, scrollController) => SingleChildScrollView(
+                  controller: scrollController,
+                  child: EnhancedQRResults(
+                    analysisResult: result,
+                    onClose: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(scannedResult);
+                    },
+                  ),
+                ),
+          ),
+    );
   }
 }

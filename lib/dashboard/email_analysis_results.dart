@@ -1,5 +1,12 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:gal/gal.dart';
+import 'package:universal_html/html.dart' as html;
 import '../models/scan/scan_models.dart';
 
 class EmailAnalysisResults extends StatefulWidget {
@@ -335,8 +342,8 @@ class _EmailAnalysisResultsState extends State<EmailAnalysisResults>
     final abuseInfo = widget.results.ipInfo?.abuseipdb;
 
     final locationText =
-        ipInfo?.locationString != null && ipInfo!.locationString!.isNotEmpty
-            ? ipInfo.locationString!
+        ipInfo?.locationString != null && ipInfo!.locationString.isNotEmpty
+            ? ipInfo.locationString
             : 'Unknown';
     final ispText =
         ipInfo?.org != null && ipInfo!.org!.isNotEmpty
@@ -442,7 +449,7 @@ class _EmailAnalysisResultsState extends State<EmailAnalysisResults>
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: Colors.grey, size: 20),
+                const Icon(Icons.info_outline, color: Colors.grey, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -706,36 +713,7 @@ class _EmailAnalysisResultsState extends State<EmailAnalysisResults>
                 child:
                     widget.results.screenshotUrl != null &&
                             widget.results.screenshotUrl!.isNotEmpty
-                        ? Image.network(
-                          widget.results.screenshotUrl!,
-                          fit: BoxFit.contain,
-                          width: double.infinity,
-                          height: 300,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              height: 300,
-                              width: double.infinity,
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value:
-                                      loadingProgress.expectedTotalBytes != null
-                                          ? loadingProgress
-                                                  .cumulativeBytesLoaded /
-                                              loadingProgress
-                                                  .expectedTotalBytes!
-                                          : null,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildScreenshotPlaceholder(
-                              'Failed to load email preview',
-                              Icons.error_outline,
-                            );
-                          },
-                        )
+                        ? _buildScreenshotImage()
                         : _buildScreenshotPlaceholder(
                           'Email preview not available for this message',
                           Icons.image_not_supported,
@@ -755,10 +733,93 @@ class _EmailAnalysisResultsState extends State<EmailAnalysisResults>
                 softWrap: true,
               ),
             ),
+            if (widget.results.screenshotUrl != null &&
+                widget.results.screenshotUrl!.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: _downloadScreenshot,
+                  icon: const Icon(Icons.file_download),
+                  label: const Text('Download Screenshot'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildScreenshotImage() {
+    final screenshotUrl = widget.results.screenshotUrl!;
+
+    // Check if it's a data URL
+    if (screenshotUrl.startsWith('data:image/jpeg;base64,')) {
+      try {
+        // Extract base64 data and decode it
+        final base64Data = screenshotUrl.split(',')[1];
+        final bytes = base64Decode(base64Data);
+
+        return Image.memory(
+          bytes,
+          fit: BoxFit.contain,
+          width: double.infinity,
+          height: 300,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildScreenshotPlaceholder(
+              'Failed to load email preview',
+              Icons.error_outline,
+            );
+          },
+        );
+      } catch (e) {
+        return _buildScreenshotPlaceholder(
+          'Failed to decode screenshot data',
+          Icons.error_outline,
+        );
+      }
+    } else {
+      // Fallback to network image for regular URLs
+      return Image.network(
+        screenshotUrl,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        height: 300,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return SizedBox(
+            height: 300,
+            width: double.infinity,
+            child: Center(
+              child: CircularProgressIndicator(
+                value:
+                    loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return _buildScreenshotPlaceholder(
+            'Failed to load email preview',
+            Icons.error_outline,
+          );
+        },
+      );
+    }
   }
 
   Widget _buildScreenshotPlaceholder([String? message, IconData? icon]) {
@@ -789,6 +850,101 @@ class _EmailAnalysisResultsState extends State<EmailAnalysisResults>
         ),
       ),
     );
+  }
+
+  Future<void> _downloadScreenshot() async {
+    if (widget.results.screenshotUrl == null ||
+        widget.results.screenshotUrl!.isEmpty) {
+      return;
+    }
+
+    try {
+      final screenshotUrl = widget.results.screenshotUrl!;
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'email_screenshot_$timestamp.jpg';
+
+      if (kIsWeb) {
+        // Web platform download
+        await _downloadScreenshotWeb(screenshotUrl, fileName);
+      } else {
+        // Mobile platform download
+        await _downloadScreenshotMobile(screenshotUrl, fileName);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Screenshot saved as $fileName'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download screenshot: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _downloadScreenshotWeb(
+    String screenshotUrl,
+    String fileName,
+  ) async {
+    if (screenshotUrl.startsWith('data:image/jpeg;base64,')) {
+      // Handle data URL
+      final base64Data = screenshotUrl.split(',')[1];
+      final bytes = base64Decode(base64Data);
+
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor =
+          html.AnchorElement(href: url)
+            ..setAttribute('download', fileName)
+            ..click();
+      html.Url.revokeObjectUrl(url);
+    } else {
+      // Handle regular URL
+      final anchor =
+          html.AnchorElement(href: screenshotUrl)
+            ..setAttribute('download', fileName)
+            ..click();
+    }
+  }
+
+  Future<void> _downloadScreenshotMobile(
+    String screenshotUrl,
+    String fileName,
+  ) async {
+    if (screenshotUrl.startsWith('data:image/jpeg;base64,')) {
+      // Handle data URL
+      final base64Data = screenshotUrl.split(',')[1];
+      final bytes = base64Decode(base64Data);
+
+      // Get the downloads directory
+      final directory = await getDownloadsDirectory();
+      if (directory != null) {
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsBytes(bytes);
+      } else {
+        // Fallback to external storage directory
+        final directory = await getExternalStorageDirectory();
+        if (directory != null) {
+          final file = File('${directory.path}/$fileName');
+          await file.writeAsBytes(bytes);
+        }
+      }
+    } else {
+      // Handle regular URL - would need to download from network
+      // For now, we'll show an error as this case is less common
+      throw Exception('Network URL download not implemented for mobile');
+    }
   }
 
   Widget _buildSection({

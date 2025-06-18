@@ -80,6 +80,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
           _analysisResult = null;
         });
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('APK Selected: "${_selectedFileName!}"'),
@@ -132,6 +133,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
       _analysisResult =
           '✅ No malware detected.\n🔐 5 permissions found.\n📦 Package is safe.';
     });
+    if (!mounted) return;
     Navigator.pop(context, _selectedFileName);
   }
 
@@ -237,7 +239,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
               ),
             ],
           ),
-          child: Icon(
+          child: const Icon(
             Icons.android_outlined,
             color: APKColorPalette.primary,
             size: 24,
@@ -284,7 +286,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
                 width: 2,
               ),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.android_outlined,
               color: APKColorPalette.primary,
               size: 32,
@@ -366,7 +368,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
                   color: APKColorPalette.getPrimaryWithOpacity(isDarkMode, 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.android_outlined,
                   color: APKColorPalette.primary,
                   size: 28,
@@ -385,7 +387,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Text(
+                    const Text(
                       'Android application loaded',
                       style: TextStyle(
                         color: APKColorPalette.primary,
@@ -408,14 +410,14 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
                     Icon(
                       Icons.insert_drive_file_outlined,
                       color: APKColorPalette.primary,
                       size: 16,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       'File Details',
                       style: TextStyle(
@@ -448,7 +450,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
               onPressed: _isAnalyzing ? null : _analyzeAPK,
               icon:
                   _isAnalyzing
-                      ? SizedBox(
+                      ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -487,7 +489,7 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
             Center(
               child: Column(
                 children: [
-                  CircularProgressIndicator(
+                  const CircularProgressIndicator(
                     color: APKColorPalette.primary,
                     strokeWidth: 3,
                   ),
@@ -519,14 +521,14 @@ class _APKAnalyzerPageState extends State<APKAnalyzerPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(
                         Icons.check_circle_outline_rounded,
                         color: APKColorPalette.success,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text(
                         'Analysis Complete',
                         style: TextStyle(

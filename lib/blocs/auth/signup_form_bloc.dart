@@ -9,7 +9,7 @@ enum NameValidationError { empty, tooShort }
 
 class Name extends FormzInput<String, NameValidationError> {
   const Name.pure() : super.pure('');
-  const Name.dirty([String value = '']) : super.dirty(value);
+  const Name.dirty([super.value = '']) : super.dirty();
 
   @override
   NameValidationError? validator(String value) {

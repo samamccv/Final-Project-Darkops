@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../blocs/scan/scan_bloc.dart';
 import '../blocs/scan/scan_event.dart';
 import '../blocs/scan/scan_state.dart';
 import '../models/scan/scan_models.dart';
+import '../widgets/sms_message_selector.dart';
+import '../services/sms_service.dart';
 
 /// SMS Feature Color Palette
 class SMSColorPalette {
@@ -85,23 +86,76 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
   }
 
   void _readDeviceSMS() async {
-    final permission = await Permission.sms.status;
-    if (permission.isDenied) {
-      final result = await Permission.sms.request();
-      if (result.isDenied && mounted) {
+    try {
+      // Show SMS message selector
+      final selectedMessage = await SMSMessageSelector.showBottomSheet(
+        context,
+        onMessageSelected: (message) {
+          // Fill the text controller with selected message
+          _controller.text = message.body;
+
+          // Optionally auto-analyze the message
+          _showAutoAnalyzeDialog(message);
+        },
+      );
+
+      if (selectedMessage != null && mounted) {
+        // Message was selected and controller is already filled
+        // Focus on the text field to show the selected content
+        FocusScope.of(context).requestFocus(FocusNode());
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('SMS permission is required to read messages'),
+            content: Text('Failed to load SMS messages: $e'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
-        return;
       }
     }
+  }
 
-    if (mounted) {
-      context.read<ScanBloc>().add(const ParseSMSFromDeviceEvent());
-    }
+  void _showAutoAnalyzeDialog(DeviceSMSMessage message) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Analyze Selected Message?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Selected message from: ${message.address}'),
+                const SizedBox(height: 8),
+                Text(
+                  message.bodyPreview,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Would you like to analyze this message now?'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Later'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _analyzeSMS();
+                },
+                child: const Text('Analyze Now'),
+              ),
+            ],
+          ),
+    );
   }
 
   void _resetState() {
@@ -217,7 +271,7 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
               ),
             ],
           ),
-          child: Icon(
+          child: const Icon(
             Icons.sms_outlined,
             color: SMSColorPalette.primary,
             size: 24,
@@ -410,7 +464,7 @@ class _SMSAnalyzerPageState extends State<SMSAnalyzerPage> {
       ),
       child: Column(
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             color: SMSColorPalette.primary,
             strokeWidth: 3,
           ),

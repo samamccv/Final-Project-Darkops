@@ -63,7 +63,6 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
   // --- STATE AND LOGIC ---
   String? _fileName;
   bool _isAnalyzing = false;
-  EmailAnalysisResponse? _analysisResult;
   String? _errorMessage;
   final ScanService _scanService = ScanService();
 
@@ -71,7 +70,6 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
     setState(() {
       _fileName = null;
       _isAnalyzing = false;
-      _analysisResult = null;
       _errorMessage = null;
     });
   }
@@ -127,7 +125,6 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
       if (mounted) {
         setState(() {
           _isAnalyzing = false;
-          _analysisResult = result;
         });
 
         // Try to capture screenshot if analysis was successful
@@ -157,6 +154,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
               scanEngines: result.scanEngines,
             );
 
+            if (!mounted) return;
             await Navigator.push(
               context,
               MaterialPageRoute(
@@ -174,6 +172,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
           } else {
             print('Screenshot capture returned null or empty URL');
             // Use original results without screenshot
+            if (!mounted) return;
             await Navigator.push(
               context,
               MaterialPageRoute(
@@ -192,6 +191,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
         } catch (screenshotError) {
           // If screenshot capture fails, proceed with original results
           print('Screenshot capture failed with error: $screenshotError');
+          if (!mounted) return;
           await Navigator.push(
             context,
             MaterialPageRoute(
@@ -328,7 +328,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
               ),
             ],
           ),
-          child: Icon(
+          child: const Icon(
             Icons.email_outlined,
             color: EmailColorPalette.primary,
             size: 24,
@@ -374,7 +374,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
                 width: 2,
               ),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.email_outlined,
               color: EmailColorPalette.primary,
               size: 32,
@@ -453,7 +453,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
               color: EmailColorPalette.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: SizedBox(
+            child: const SizedBox(
               width: 32,
               height: 32,
               child: CircularProgressIndicator(
@@ -506,13 +506,17 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: EmailColorPalette.danger, size: 24),
+          const Icon(
+            Icons.error_outline,
+            color: EmailColorPalette.danger,
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Analysis Failed',
                   style: TextStyle(
                     color: EmailColorPalette.danger,
@@ -523,7 +527,7 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
                 const SizedBox(height: 4),
                 Text(
                   _errorMessage!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: EmailColorPalette.danger,
                     fontSize: 14,
                   ),
@@ -537,7 +541,11 @@ class _EmailAnalysisPageState extends State<EmailAnalysisPage> {
                 _errorMessage = null;
               });
             },
-            icon: Icon(Icons.close, color: EmailColorPalette.danger, size: 20),
+            icon: const Icon(
+              Icons.close,
+              color: EmailColorPalette.danger,
+              size: 20,
+            ),
           ),
         ],
       ),

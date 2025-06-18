@@ -1,14 +1,15 @@
 // lib/blocs/scan/scan_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../services/scan_service.dart';
 import '../../services/google_auth_service.dart';
+import '../../services/sms_service.dart';
 import '../../models/scan/scan_models.dart';
 import 'scan_event.dart';
 import 'scan_state.dart';
 
 class ScanBloc extends Bloc<ScanEvent, ScanState> {
   final ScanService _scanService;
+  final SMSService _smsService = SMSService();
 
   ScanBloc({
     required ScanService scanService,
@@ -18,6 +19,8 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     // SMS Events
     on<AnalyzeSMSEvent>(_onAnalyzeSMS);
     on<ParseSMSFromDeviceEvent>(_onParseSMSFromDevice);
+    on<LoadDeviceSMSMessagesEvent>(_onLoadDeviceSMSMessages);
+    on<SelectDeviceSMSMessageEvent>(_onSelectDeviceSMSMessage);
 
     // URL Events
     on<AnalyzeURLEvent>(_onAnalyzeURL);
@@ -86,27 +89,38 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
     ParseSMSFromDeviceEvent event,
     Emitter<ScanState> emit,
   ) async {
-    // Check SMS permission
-    final permission = await Permission.sms.request();
-    if (!permission.isGranted) {
-      emit(
-        state.copyWith(
-          status: ScanStatus.permissionRequired,
-          errorMessage: 'SMS permission is required to read messages',
-        ),
-      );
-      return;
-    }
+    // This event now triggers loading device SMS messages
+    add(const LoadDeviceSMSMessagesEvent());
+  }
 
+  Future<void> _onLoadDeviceSMSMessages(
+    LoadDeviceSMSMessagesEvent event,
+    Emitter<ScanState> emit,
+  ) async {
     emit(state.copyWith(status: ScanStatus.loading));
 
     try {
-      // Note: sms_advanced package would be used here to read SMS
-      // For now, we'll emit a placeholder
+      // Check SMS permission
+      final hasPermission = await _smsService.hasPermission();
+      if (!hasPermission) {
+        final permissionResult = await _smsService.getPermissionStatus();
+        emit(
+          state.copyWith(
+            status: ScanStatus.permissionRequired,
+            errorMessage: permissionResult.userMessage,
+          ),
+        );
+        return;
+      }
+
+      // Load SMS messages from device
+      final messages = await _smsService.readAllSMSMessages(limit: 100);
+
       emit(
         state.copyWith(
           status: ScanStatus.success,
-          deviceSMSMessages: ['Sample SMS message from device'],
+          deviceSMSMessagesList: messages,
+          deviceSMSMessages: messages.map((msg) => msg.bodyPreview).toList(),
         ),
       );
     } catch (e) {
@@ -117,6 +131,14 @@ class ScanBloc extends Bloc<ScanEvent, ScanState> {
         ),
       );
     }
+  }
+
+  Future<void> _onSelectDeviceSMSMessage(
+    SelectDeviceSMSMessageEvent event,
+    Emitter<ScanState> emit,
+  ) async {
+    // Analyze the selected SMS message
+    add(AnalyzeSMSEvent(event.messageBody));
   }
 
   // URL Analysis

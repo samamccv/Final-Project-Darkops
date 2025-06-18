@@ -1,9 +1,11 @@
 // lib/services/api_service.dart
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/auth/auth_models.dart';
 import '../models/dashboard/dashboard_stats.dart';
 import '../config/app_config.dart';
+import 'qr_analysis_service.dart';
 
 class ApiService {
   final Dio _dio;
@@ -286,13 +288,13 @@ class ApiService {
     return DashboardStats.fromJson({
       'totalScans': 42,
       'totalScansPercentageChange': 15.3,
-      'threatScore': {
+      'threatScore': const {
         'score': 7.2,
         'level': 'MEDIUM',
         'percentageChange': -2.1,
         'previousScore': 7.4,
       },
-      'scansByType': [
+      'scansByType': const [
         {
           'type': 'SMS',
           'count': 8,
@@ -331,11 +333,11 @@ class ApiService {
           'scanType': 'EMAIL',
           'target': 'suspicious-email@example.com',
           'SR': 'HIGH',
-          'result': {
+          'result': const {
             'threatScore': 8.5,
             'threatLevel': 'HIGH',
             'confidence': 0.92,
-            'findings': [
+            'findings': const [
               {
                 'type': 'PHISHING',
                 'severity': 'HIGH',
@@ -354,11 +356,11 @@ class ApiService {
           'scanType': 'URL',
           'target': 'https://suspicious-site.com',
           'SR': 'MEDIUM',
-          'result': {
+          'result': const {
             'threatScore': 6.2,
             'threatLevel': 'MEDIUM',
             'confidence': 0.78,
-            'findings': [
+            'findings': const [
               {
                 'type': 'MALWARE',
                 'severity': 'MEDIUM',
@@ -377,11 +379,11 @@ class ApiService {
           'scanType': 'SMS',
           'target': 'Your account has been compromised...',
           'SR': 'LOW',
-          'result': {
+          'result': const {
             'threatScore': 2.1,
             'threatLevel': 'LOW',
             'confidence': 0.65,
-            'findings': [
+            'findings': const [
               {
                 'type': 'SPAM',
                 'severity': 'LOW',
@@ -400,11 +402,11 @@ class ApiService {
           'scanType': 'APK',
           'target': 'malicious-app.apk',
           'SR': 'CRITICAL',
-          'result': {
+          'result': const {
             'threatScore': 9.1,
             'threatLevel': 'CRITICAL',
             'confidence': 0.95,
-            'findings': [
+            'findings': const [
               {
                 'type': 'TROJAN',
                 'severity': 'CRITICAL',
@@ -423,11 +425,11 @@ class ApiService {
           'scanType': 'QR',
           'target': 'QR Code: malicious-redirect',
           'SR': 'MEDIUM',
-          'result': {
+          'result': const {
             'threatScore': 4.7,
             'threatLevel': 'MEDIUM',
             'confidence': 0.71,
-            'findings': [
+            'findings': const [
               {
                 'type': 'REDIRECT',
                 'severity': 'MEDIUM',
@@ -442,6 +444,38 @@ class ApiService {
         },
       ],
     });
+  }
+
+  // QR Analysis API methods
+  Future<QRAnalysisResponse> analyzeQRCode(QRAnalysisRequest request) async {
+    try {
+      final token = await getToken();
+      debugPrint('ApiService: QR Analysis - Token available: ${token != null}');
+      if (token != null) {
+        debugPrint('ApiService: QR Analysis - Token length: ${token.length}');
+      }
+      final response = await _dio.post(
+        '/ai/qr/analyze',
+        data: request.toJson(),
+      );
+      return QRAnalysisResponse.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<PhishingAnalysisResponse> detectPhishing(
+    PhishingAnalysisRequest request,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/ai/qr/detect-phishing',
+        data: request.toJson(),
+      );
+      return PhishingAnalysisResponse.fromJson(response.data);
+    } catch (e) {
+      throw _handleError(e);
+    }
   }
 
   // Enhanced error handling

@@ -23,6 +23,25 @@ class ParseSMSFromDeviceEvent extends ScanEvent {
   const ParseSMSFromDeviceEvent();
 }
 
+class LoadDeviceSMSMessagesEvent extends ScanEvent {
+  const LoadDeviceSMSMessagesEvent();
+}
+
+class SelectDeviceSMSMessageEvent extends ScanEvent {
+  final String messageId;
+  final String messageBody;
+  final String sender;
+
+  const SelectDeviceSMSMessageEvent({
+    required this.messageId,
+    required this.messageBody,
+    required this.sender,
+  });
+
+  @override
+  List<Object> get props => [messageId, messageBody, sender];
+}
+
 // URL Events
 class AnalyzeURLEvent extends ScanEvent {
   final String url;

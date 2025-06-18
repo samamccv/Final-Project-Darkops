@@ -293,7 +293,7 @@ class _LoginDemoPageState extends State<LoginDemoPage> {
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.white),
+          const Icon(Icons.error_outline, color: Colors.white),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
